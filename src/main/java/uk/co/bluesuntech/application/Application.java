@@ -20,9 +20,10 @@ public class Application {
 //		ec2Client.launchNewInstance("ami-47a23a30", "t2.micro", 1);
 //		ec2Client.startInstance("i-19684db3");
 //		ec2Client.terminateInstance("i-93745139");
+//		ec2Client.createSecurityGroup("testSG2", "Test SG 2");
 		
 		RDSClient rdsClient = new RDSClient();
 //		rdsClient.createDBInstance("testDB", "postgres", "testUser", "wibble123", "TestDB", "db.t2.micro", 8);
-		rdsClient.terminateDBInstance("TestDB", true);
+//		rdsClient.terminateDBInstance("TestDB", true);
 	}
 }

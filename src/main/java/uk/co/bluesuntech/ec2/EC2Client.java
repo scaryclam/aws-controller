@@ -16,6 +16,8 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.autoscaling.model.Filter;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
+import com.amazonaws.services.ec2.model.CreateSecurityGroupResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.Instance;
@@ -112,5 +114,14 @@ public class EC2Client {
 		RunInstancesRequest request = new RunInstancesRequest(AMI_ID, number, number);
 		request.setInstanceType(type);
 		return request;
+	}
+	
+	public void createSecurityGroup(String groupName, String groupDescription) {
+		CreateSecurityGroupRequest request = new CreateSecurityGroupRequest();
+		request.setGroupName(groupName);
+		request.setDescription(groupDescription);
+		System.out.println("Creating security group");
+		CreateSecurityGroupResult result = ec2Client.createSecurityGroup(request);
+		System.out.println("Created security group");
 	}
 }
