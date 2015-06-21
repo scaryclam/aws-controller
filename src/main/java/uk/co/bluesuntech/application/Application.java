@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.amazonaws.services.elasticloadbalancing.model.Listener;
+
 import uk.co.bluesuntech.ec2.EC2Client;
 import uk.co.bluesuntech.elasticloadbalancer.LoadBalancerClient;
 import uk.co.bluesuntech.rds.RDSClient;
@@ -37,7 +39,16 @@ public class Application {
 		
 		LoadBalancerClient lbClient = new LoadBalancerClient();
 		Collection<String> groups = new ArrayList<String>();
-		groups.add("testSG2");
-		lbClient.createLoadBalancer("test-balancer-2", groups);
+		groups.add("sg-da576fbf");
+		
+		Collection<String> availabilityZones = new ArrayList<String>();
+		availabilityZones.add("eu-west-1a");
+		availabilityZones.add("eu-west-1b");
+		availabilityZones.add("eu-west-1c");
+		
+		Collection<Listener> listeners = new ArrayList<Listener>();
+		Listener listener = lbClient.createListener("http", 80, 80);
+		listeners.add(listener);
+		lbClient.createLoadBalancer("test-balancer-2", groups, listeners, availabilityZones);
 	}
 }
