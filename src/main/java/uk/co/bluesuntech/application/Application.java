@@ -20,7 +20,7 @@ public class Application {
 	// 2) Create instance profiles - todo
 	// 3) Create instances - can do
 	// 4) Create RDS instances - can do
-	// 5) Create load balancers - todo
+	// 5) Create load balancers - can do
 	// 6) Create autoscaling group - todo
 	// 7) Modify autoscaling group - todo
 	
