@@ -77,7 +77,6 @@ public class AutoscaleClient {
         }
 
         request.setDimensions(dimensions);
-
         request.setNamespace(namespace);
         request.setComparisonOperator(ComparisonOperator.GreaterThanThreshold);
         request.setStatistic(Statistic.Average);
