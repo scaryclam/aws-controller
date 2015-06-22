@@ -30,7 +30,7 @@ public class AutoscaleClient {
         asClient.createLaunchConfiguration(request);
 	}
 	
-	public void createAutoScalingGroup(String autoScaleGroupName, String launchConfiguration, Collection<String> availabilityZones, Collection<String> loadBalancerNames, String healthCheckType, Integer healthCheckGracePeriod, Integer defaultCooldown) {
+	public void createAutoScalingGroup(String autoScaleGroupName, String launchConfiguration, Collection<String> availabilityZones, Collection<String> loadBalancerNames, String healthCheckType, Integer healthCheckGracePeriod, Integer defaultCooldown, Integer minSize, Integer maxSize) {
 		CreateAutoScalingGroupRequest request = new CreateAutoScalingGroupRequest();
         request.setAutoScalingGroupName(autoScaleGroupName);
         request.setLaunchConfigurationName(launchConfiguration);
@@ -39,6 +39,8 @@ public class AutoscaleClient {
         request.setHealthCheckType(healthCheckType);
         request.setHealthCheckGracePeriod(healthCheckGracePeriod);
         request.setDefaultCooldown(defaultCooldown);
+        request.setMinSize(minSize);
+        request.setMaxSize(maxSize);
         asClient.createAutoScalingGroup(request);
 	}
 }
