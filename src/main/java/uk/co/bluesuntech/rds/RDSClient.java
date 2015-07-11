@@ -63,6 +63,12 @@ public class RDSClient {
 			currentInstance.put("engine", instance.getEngine());
 			currentInstance.put("engineVersion", instance.getEngineVersion());
 			currentInstance.put("allocatedStorage", instance.getAllocatedStorage());
+			currentInstance.put("instanceClass", instance.getDBInstanceClass());
+			currentInstance.put("status", instance.getDBInstanceStatus());
+			currentInstance.put("endPoint", instance.getEndpoint());
+			currentInstance.put("availabilityZone", instance.getAvailabilityZone());
+			currentInstance.put("multiAZ", instance.getMultiAZ());
+			currentInstance.put("securityGroups", instance.getVpcSecurityGroups());
 			rdsInstances.add(currentInstance);
 		}
 		return rdsInstances;

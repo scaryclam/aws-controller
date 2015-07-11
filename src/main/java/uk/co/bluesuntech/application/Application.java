@@ -16,6 +16,7 @@ import com.amazonaws.util.json.JSONObject;
 import uk.co.bluesuntech.ec2.EC2Client;
 import uk.co.bluesuntech.elasticloadbalancer.LoadBalancerClient;
 import uk.co.bluesuntech.export.Exporter;
+import uk.co.bluesuntech.importer.Importer;
 import uk.co.bluesuntech.rds.RDSClient;
 
 
@@ -32,14 +33,23 @@ public class Application {
 	// 7) Modify autoscaling group - todo
 	
 	public static void main(String[] args) throws IOException {
-		Exporter exporter = new Exporter();
+//		Exporter exporter = new Exporter();
+//		try {
+//			JSONObject config = exporter.exportExploration();
+//			exporter.writeConfig("/tmp/output.aws", config);
+//		} catch (JSONException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+		
+		Importer importer = new Importer();
 		try {
-			JSONObject config = exporter.exportExploration();
-			exporter.writeConfig("/tmp/output.aws", config);
+			JSONObject config = importer.readConfigFromFile("/tmp/output.aws");
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		//EC2Client ec2Client = new EC2Client();
 		//ec2Client.getAllInstances();
 		//ec2Client.showAllInstances();
