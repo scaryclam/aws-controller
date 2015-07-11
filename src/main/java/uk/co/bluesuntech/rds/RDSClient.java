@@ -1,11 +1,18 @@
 package uk.co.bluesuntech.rds;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.rds.AmazonRDS;
 import com.amazonaws.services.rds.AmazonRDSClient;
 import com.amazonaws.services.rds.model.CreateDBInstanceRequest;
+import com.amazonaws.services.rds.model.DBInstance;
 import com.amazonaws.services.rds.model.DeleteDBInstanceRequest;
+import com.amazonaws.services.rds.model.DescribeDBInstancesResult;
+import com.amazonaws.util.json.JSONException;
+import com.amazonaws.util.json.JSONObject;
 
 
 public class RDSClient {
@@ -37,5 +44,27 @@ public class RDSClient {
 		System.out.println("Deleting DB Instance");
 	    rdsClient.deleteDBInstance(request);
 	    System.out.println("Deleted DB Instance");
+	}
+	
+	private List<DBInstance> getRdsInstances() {
+		DescribeDBInstancesResult results = rdsClient.describeDBInstances();
+		return results.getDBInstances();
+	}
+	
+	// JSON Fetchers
+	public List<JSONObject> getRDSInstancesAsJson() throws JSONException {
+		List<JSONObject> rdsInstances = new ArrayList<JSONObject>();
+		List<DBInstance> instances = getRdsInstances();
+		for (DBInstance instance : instances) {
+			JSONObject currentInstance = new JSONObject();
+			currentInstance.put("instanceId", instance.getDBInstanceIdentifier());
+			currentInstance.put("dbName", instance.getDBName());
+			currentInstance.put("masterUsername", instance.getMasterUsername());
+			currentInstance.put("engine", instance.getEngine());
+			currentInstance.put("engineVersion", instance.getEngineVersion());
+			currentInstance.put("allocatedStorage", instance.getAllocatedStorage());
+			rdsInstances.add(currentInstance);
+		}
+		return rdsInstances;
 	}
 }
