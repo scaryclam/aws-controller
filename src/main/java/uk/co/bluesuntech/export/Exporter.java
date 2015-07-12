@@ -9,11 +9,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+import com.amazonaws.util.json.JSONException;
+import com.amazonaws.util.json.JSONObject;
+
 import uk.co.bluesuntech.ec2.EC2Client;
 import uk.co.bluesuntech.rds.RDSClient;
 
-import com.amazonaws.util.json.JSONException;
-import com.amazonaws.util.json.JSONObject;
 
 public class Exporter {
 	public JSONObject exportExploration() throws JSONException {
@@ -36,8 +37,22 @@ public class Exporter {
 		rdsConfig.put("instances", rdsInstances);
 		configuration.put("rds", rdsConfig);
 		
-		System.out.println("Here is the JSON!");
-		System.out.println(configuration.toString(4));
+		return configuration;
+	}
+	
+	public JSONObject createEmptyConfig() throws JSONException{
+		JSONObject configuration = new JSONObject();
+		JSONObject ec2Config = new JSONObject();
+		JSONObject rdsConfig = new JSONObject();
+		
+		ec2Config.put("instances", new JSONObject());
+		ec2Config.put("securityGroups", new JSONObject());
+		
+		rdsConfig.put("instances", new JSONObject());
+		
+		configuration.put("ec2", ec2Config);
+		configuration.put("rds", rdsConfig);
+		
 		return configuration;
 	}
 	
