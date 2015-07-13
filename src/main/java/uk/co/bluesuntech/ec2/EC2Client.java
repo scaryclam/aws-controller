@@ -25,11 +25,13 @@ import com.amazonaws.services.ec2.model.CreateSecurityGroupResult;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.DescribeSecurityGroupsResult;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.IpPermission;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
+import com.amazonaws.services.ec2.model.SecurityGroup;
 import com.amazonaws.services.ec2.model.StartInstancesRequest;
 import com.amazonaws.services.ec2.model.StartInstancesResult;
 import com.amazonaws.services.ec2.model.StopInstancesRequest;
@@ -40,6 +42,8 @@ import com.amazonaws.services.elasticloadbalancing.model.CreateLoadBalancerReque
 import com.amazonaws.services.elasticloadbalancing.model.CreateLoadBalancerResult;
 import com.amazonaws.services.opsworks.model.StartInstanceRequest;
 import com.amazonaws.services.opsworks.model.StopInstanceRequest;
+import com.amazonaws.util.json.JSONException;
+import com.amazonaws.util.json.JSONObject;
 
 
 public class EC2Client {
@@ -186,5 +190,47 @@ public class EC2Client {
 		       .withIpPermissions(ipPermission);
 	
 		ec2Client.authorizeSecurityGroupIngress(request);
+	}
+	
+	private List<SecurityGroup> getSecurityGroups() {
+		DescribeSecurityGroupsResult results = ec2Client.describeSecurityGroups();
+		return results.getSecurityGroups();
+	}
+	
+	// JSON Fetchers
+	public List<JSONObject> getSecurityGroupsAsJson() throws JSONException {
+		List<JSONObject> securityGroupList = new ArrayList<JSONObject>();
+		List<SecurityGroup> securityGroups = getSecurityGroups();
+		for (SecurityGroup securityGroup : securityGroups) {
+			JSONObject currentSg = new JSONObject();
+			currentSg.put("groupId", securityGroup.getGroupId());
+			currentSg.put("groupName", securityGroup.getGroupName());
+			currentSg.put("permissions", securityGroup.getIpPermissions());
+			currentSg.put("permissionsEgress", securityGroup.getIpPermissionsEgress());
+			currentSg.put("tags", securityGroup.getTags());
+			securityGroupList.add(currentSg);
+		}
+		return securityGroupList;
+	}
+
+	public List<JSONObject> getInstancesAsJson() throws JSONException {
+		List<JSONObject> instanceList = new ArrayList<JSONObject>();
+		// make sure the instance list is up-to-date
+		getAllInstances();
+		for (Instance instance : instances.values()) {
+			JSONObject currentInstance = new JSONObject();
+			currentInstance.put("imageId", instance.getImageId());
+			currentInstance.put("keyName", instance.getKeyName());
+			currentInstance.put("instanceType", instance.getInstanceType());
+			currentInstance.put("state", instance.getState());
+			JSONObject tags = new JSONObject();
+			for (Tag tag : instance.getTags()) {
+				tags.put(tag.getKey(), tag.getValue());
+			}
+			currentInstance.put("tags", tags);
+			currentInstance.put("securityGroups", instance.getSecurityGroups());
+			instanceList.add(currentInstance);
+		}
+		return instanceList;
 	}
 }
