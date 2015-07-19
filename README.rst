@@ -1,4 +1,4 @@
-aws-ontroller
+aws-controller
 =============
 
 This is a project in Java, that allows the user to fetch their current AWS
