@@ -56,19 +56,15 @@ public class EC2SecurityGroupDelta {
 			Boolean modified = false;
 			JSONObject SGMods = new JSONObject();
 			
-			// Check the group name
-			if (!workingGroup.get("groupName").equals(securityGroup.get("groupName"))) {
-				modified = true;
-				// Add group name to modified
-				JSONObject modGroupId = new JSONObject();
-				modGroupId.put("old", securityGroup.get("groupName"));
-				modGroupId.put("new", workingGroup.get("groupName"));
-				SGMods.put("groupName", modGroupId);
-			}
+			// Only the tags can be updated on AWS, so only get the differences for these
 			
 			JSONObject tagsDelta = getTagDelta(securityGroup, workingGroup);
 			
+			if (tagsDelta.getJSONObject("added").keys().hasNext() || tagsDelta.getJSONObject("deleted").keys().hasNext() || tagsDelta.getJSONObject("modified").keys().hasNext()) {
+				modified = true;
+			}
 			SGMods.put("tags", tagsDelta);
+			
 			if (modified) {
 				SGDelta.put((String) securityGroup.get("groupId"), SGMods);
 			    modifications.add(SGDelta);
@@ -108,7 +104,8 @@ public class EC2SecurityGroupDelta {
 		
 		// Now find the added tags
 		JSONObject workingSgTags = (JSONObject) workingGroup.get("tags");
-		Iterator<String> workingKeys = workingSgTags.keys(); 
+		Iterator<String> workingKeys = workingSgTags.keys();
+		
 		while (workingKeys.hasNext()) {
 			JSONObject securityGroupTags = (JSONObject) securityGroup.get("tags");
 			String key = workingKeys.next();
