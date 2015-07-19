@@ -10,6 +10,7 @@ public class OptionFactory {
 		options.addOption("i", "input", true, "Use specified input file");
 		options.addOption("d", "diff", false,
 				"Show a diff between in the input file and the current setup");
+		options.addOption("D", "dry-run", false, "Perform all tasks normally, but do not apply changes");
 		options.addOption("y", "no-input", false,
 				"Do not ask for confirmation");
 		return options;

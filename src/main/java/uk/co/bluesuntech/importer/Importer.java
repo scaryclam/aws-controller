@@ -5,7 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+
+import uk.co.bluesuntech.delta.EC2SecurityGroupDelta;
 
 import com.amazonaws.util.json.JSONArray;
 import com.amazonaws.util.json.JSONException;
@@ -22,24 +25,24 @@ public class Importer {
 		return importedJson;
 	}
 	
-	public void createDelta(JSONObject newConfig, JSONObject currentConfig) throws JSONException {
+	public JSONObject createDelta(JSONObject currentConfig, JSONObject existingConfig) throws JSONException {
+		/* currentConfig is the config loaded from file. existingConfig is the config that actually
+		 * exists on AWS.
+		 */
+		
+		JSONObject fullDelta = new JSONObject();
+		
 		// EC2
 		JSONObject ec2Delta = new JSONObject();
-		// Get deleted SGs
-		List<String> deletedGroups = new ArrayList<String>();
-		JSONObject ec2Config = (JSONObject) currentConfig.get("ec2");
-		JSONArray securityGroups = (JSONArray) ec2Config.get("securityGroups");
-		for (int i = 0; i < securityGroups.length(); i++) {
-			JSONObject securityGroup = securityGroups.getJSONObject(i);
-			System.out.println(securityGroup.toString());
-		}
-		// Get new SGs
-		
-		
-		
-		
-		
+		JSONObject sgDelta = new EC2SecurityGroupDelta().getSecurityGroupDelta(currentConfig, existingConfig);
+		ec2Delta.put("securityGroups", sgDelta);
+
 		// Get new instances
 		// Get deleted instances
+		
+		// Put add everything to delta
+		fullDelta.put("ec2", ec2Delta);
+		
+		return fullDelta;
 	}
 }

@@ -1,7 +1,10 @@
 package uk.co.bluesuntech.application;
 
 import java.awt.List;
+import java.io.BufferedReader;
+import java.io.Console;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -20,6 +23,7 @@ import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
 
 import uk.co.bluesuntech.config.OptionFactory;
+import uk.co.bluesuntech.delta.DeltaApplier;
 import uk.co.bluesuntech.ec2.EC2Client;
 import uk.co.bluesuntech.elasticloadbalancer.LoadBalancerClient;
 import uk.co.bluesuntech.export.Exporter;
@@ -42,6 +46,8 @@ public class Application {
 		boolean hasInput = setup.hasOption('i');
 		boolean hasOutput = setup.hasOption('o');
 		boolean noInput = setup.hasOption('y');
+		boolean showDiff = setup.hasOption('d');
+		boolean dryRun = setup.hasOption("dry-run") || setup.hasOption('D');
 		
 		if (help) {
 			HelpFormatter formatter = new HelpFormatter();
@@ -57,20 +63,49 @@ public class Application {
 		System.out.println("Current configuration:");
 		System.out.println(currentConfig.toString(4));
 		
+		JSONObject delta = new JSONObject();
+		
 		if (hasInput) {
 			Importer importer = new Importer();
 			String inputFile = setup.getOptionValue('i');
 			System.out.println("Input file set, attempting to load configuration");
 			JSONObject newConfig = importer.readConfigFromFile(inputFile);
-			importer.createDelta(newConfig, currentConfig);
+			delta = importer.createDelta(newConfig, currentConfig);
 		}
 		
 		JSONObject changedConfig = currentConfig;
+		
+		if (showDiff) {
+			// Tell user what changes will be made
+			System.out.println("Changes to be made:");
+			System.out.println(delta.toString(4));
+		}
 		
 		if (hasOutput) {
 			System.out.println("Output option set. Attempting to write configuration");
 			String outputFile = setup.getOptionValue('o');
 			exporter.writeConfig(outputFile, changedConfig);
+		}
+		
+		if (!dryRun) {
+			Boolean applyChanges = false;
+			if (noInput) {
+				applyChanges = true;
+			} else {
+				System.out.println("Would you like to apply the changes? [N/y]");
+				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+			    String input = reader.readLine();
+				if (input.toLowerCase().equals("y")) {
+					applyChanges = true;
+				}
+			}
+			if (applyChanges) {
+			    // Apply Changes
+			    DeltaApplier applier = new DeltaApplier();
+			    applier.applyDelta(delta);
+			} else {
+				System.out.println("No changes have been applied");
+			}
 		}
 
 		//LoadBalancerClient lbClient = new LoadBalancerClient();

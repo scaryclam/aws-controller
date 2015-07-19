@@ -12,6 +12,7 @@ import java.util.Set;
 import org.apache.commons.collections4.keyvalue.MultiKey;
 import org.apache.commons.collections4.map.MultiKeyMap;
 
+import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
@@ -19,10 +20,12 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.autoscaling.model.Filter;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
+import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupEgressRequest;
 import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupIngressRequest;
 import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
 import com.amazonaws.services.ec2.model.CreateSecurityGroupResult;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
+import com.amazonaws.services.ec2.model.DeleteSecurityGroupRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DescribeSecurityGroupsResult;
@@ -168,16 +171,36 @@ public class EC2Client {
 		return request;
 	}
 	
-	public void createSecurityGroup(String groupName, String groupDescription) {
+	public String createSecurityGroup(String groupName, String groupDescription) {
 		CreateSecurityGroupRequest request = new CreateSecurityGroupRequest();
 		request.setGroupName(groupName);
 		request.setDescription(groupDescription);
 		System.out.println("Creating security group");
 		CreateSecurityGroupResult result = ec2Client.createSecurityGroup(request);
 		System.out.println("Created security group");
+		return result.getGroupId();
 	}
 	
-	public void addSecurityGroupIpPermission(String sgName, Collection<String> ipRanges, String protocol, Integer startPort, Integer endPort) {
+	public void addOutboundSecurityGroupIpPermission(String sgName, Collection<String> ipRanges, String protocol, Integer startPort, Integer endPort) {
+		IpPermission ipPermission = new IpPermission();
+			    	
+		ipPermission.withIpRanges(ipRanges)
+			        .withIpProtocol(protocol)
+			        .withFromPort(startPort)
+			        .withToPort(endPort);
+		AuthorizeSecurityGroupEgressRequest request = new AuthorizeSecurityGroupEgressRequest();
+			    	
+		request.withGroupId(sgName)
+		       .withIpPermissions(ipPermission);
+		try {
+			ec2Client.authorizeSecurityGroupEgress(request);
+		} catch (AmazonServiceException e) {
+			// Do nothing in case of exception except log it happened
+			System.out.println("An Error Occured: " + e.getErrorMessage());
+		}
+	}
+	
+	public void addInboundSecurityGroupIpPermission(String sgId, Collection<String> ipRanges, String protocol, Integer startPort, Integer endPort) {
 		IpPermission ipPermission = new IpPermission();
 			    	
 		ipPermission.withIpRanges(ipRanges)
@@ -186,15 +209,25 @@ public class EC2Client {
 			        .withToPort(endPort);
 		AuthorizeSecurityGroupIngressRequest request = new AuthorizeSecurityGroupIngressRequest();
 			    	
-		request.withGroupName(sgName)
+		request.withGroupId(sgId)
 		       .withIpPermissions(ipPermission);
-	
-		ec2Client.authorizeSecurityGroupIngress(request);
+		try {
+		    ec2Client.authorizeSecurityGroupIngress(request);
+		} catch (AmazonServiceException e) {
+			// Do nothing in case of exception except log it happened
+			System.out.println("An Error Occured: " + e.getErrorMessage());
+		}
 	}
 	
 	private List<SecurityGroup> getSecurityGroups() {
 		DescribeSecurityGroupsResult results = ec2Client.describeSecurityGroups();
 		return results.getSecurityGroups();
+	}
+	
+	public void deleteSecurityGroup(String securityGroupId) {
+		DeleteSecurityGroupRequest request = new DeleteSecurityGroupRequest();
+		request.withGroupId(securityGroupId);
+		ec2Client.deleteSecurityGroup(request);
 	}
 	
 	// JSON Fetchers
@@ -207,7 +240,11 @@ public class EC2Client {
 			currentSg.put("groupName", securityGroup.getGroupName());
 			currentSg.put("permissions", securityGroup.getIpPermissions());
 			currentSg.put("permissionsEgress", securityGroup.getIpPermissionsEgress());
-			currentSg.put("tags", securityGroup.getTags());
+			JSONObject tags = new JSONObject();
+			for (Tag tag : securityGroup.getTags()) {
+				tags.put(tag.getKey(), tag.getValue());
+			}
+			currentSg.put("tags", tags);
 			securityGroupList.add(currentSg);
 		}
 		return securityGroupList;
