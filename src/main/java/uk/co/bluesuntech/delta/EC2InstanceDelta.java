@@ -61,7 +61,7 @@ public class EC2InstanceDelta {
         
         for (int i = 0; i < existingEC2Instances.length(); i++) {
             JSONObject instance = existingEC2Instances.getJSONObject(i);
-            if (!currentInstances.contains(instance.get("instanceId"))) {
+            if (!currentInstances.contains(instance.get("instanceId")) && !instance.get("state").equals("{Code: 48,Name: terminated}")) {
                 deletedInstances.add(instance);
             }
         }
