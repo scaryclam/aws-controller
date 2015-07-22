@@ -256,6 +256,7 @@ public class EC2Client {
 		getAllInstances();
 		for (Instance instance : instances.values()) {
 			JSONObject currentInstance = new JSONObject();
+			currentInstance.put("instanceId", instance.getInstanceId());
 			currentInstance.put("imageId", instance.getImageId());
 			currentInstance.put("keyName", instance.getKeyName());
 			currentInstance.put("instanceType", instance.getInstanceType());

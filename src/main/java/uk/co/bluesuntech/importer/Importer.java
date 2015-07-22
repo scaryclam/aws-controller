@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import uk.co.bluesuntech.delta.EC2InstanceDelta;
 import uk.co.bluesuntech.delta.EC2SecurityGroupDelta;
 
 import com.amazonaws.util.json.JSONArray;
@@ -35,8 +36,10 @@ public class Importer {
 		// EC2
 		JSONObject ec2Delta = new JSONObject();
 		JSONObject sgDelta = new EC2SecurityGroupDelta().getSecurityGroupDelta(currentConfig, existingConfig);
+		JSONObject instanceDelta = new EC2InstanceDelta().getInstancesDelta(currentConfig, existingConfig);
 		ec2Delta.put("securityGroups", sgDelta);
-
+		ec2Delta.put("instances", instanceDelta);
+		
 		// Get new instances
 		// Get deleted instances
 		
