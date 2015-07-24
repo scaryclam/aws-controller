@@ -58,6 +58,7 @@ public class RDSClient {
 		for (DBInstance instance : instances) {
 			JSONObject currentInstance = new JSONObject();
 			currentInstance.put("instanceId", instance.getDBInstanceIdentifier());
+			currentInstance.put("endPoint", instance.getEndpoint());
 			currentInstance.put("dbName", instance.getDBName());
 			currentInstance.put("masterUsername", instance.getMasterUsername());
 			currentInstance.put("engine", instance.getEngine());

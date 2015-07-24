@@ -16,18 +16,45 @@ public class DeltaApplier {
 	public void applyDelta(JSONObject delta) throws JSONException {
 		System.out.println("Applying Changes");
 		JSONObject ec2Delta = delta.getJSONObject("ec2");
-		JSONObject securityGroupDelta = (JSONObject) ec2Delta.get("securityGroups");
+		JSONObject securityGroupDelta = ec2Delta.getJSONObject("securityGroups");
+		JSONObject ec2InstanceDelta = ec2Delta.getJSONObject("instances");
 		
 		// Add Security Groups
-		JSONArray sgAdditions = (JSONArray) securityGroupDelta.get("added");
-		JSONArray sgDeletions = (JSONArray) securityGroupDelta.get("deleted");
-		JSONArray sgModifications = (JSONArray) securityGroupDelta.get("modified");
+		JSONArray sgAdditions = securityGroupDelta.getJSONArray("added");
+		JSONArray sgDeletions = securityGroupDelta.getJSONArray("deleted");
+		JSONArray sgModifications = securityGroupDelta.getJSONArray("modified");
+		JSONArray ec2InstanceAdditions = ec2InstanceDelta.getJSONArray("added");
+		JSONArray ec2InstanceDeletions = ec2InstanceDelta.getJSONArray("deleted");
 		EC2Client ec2Client = new EC2Client();
 		
 		addSecurityGroups(sgAdditions, ec2Client);
 		deleteSecurityGroups(sgDeletions, ec2Client);
+		addEC2Instances(ec2InstanceAdditions, ec2Client);
+		deleteEC2Instances(ec2InstanceDeletions, ec2Client);
 		modifySecurityGroups(sgModifications, ec2Client);
-		
+	}
+	
+	private void addEC2Instances(JSONArray instanceAdditions, EC2Client ec2Client) throws JSONException {
+		for (int instanceIndex = 0; instanceIndex < instanceAdditions.length(); instanceIndex++) {
+			JSONObject instance = instanceAdditions.getJSONObject(instanceIndex);
+			String amiId = instance.getString("imageId");
+			String type = instance.getString("instanceType");
+			String keyName = instance.getString("keyName");
+			JSONArray sgNames = instance.getJSONArray("securityGroups");
+			ArrayList<String> securityGroups = new ArrayList<String>(); 
+			for (int sgNameIndex = 0; sgNameIndex < sgNames.length(); sgNameIndex++){
+				JSONObject securityGroup = sgNames.getJSONObject(sgNameIndex);
+				securityGroups.add(securityGroup.getString("groupName"));
+			} 
+			ec2Client.launchNewInstances(amiId, type, 1, keyName, securityGroups);
+		}
+	}
+	
+	private void deleteEC2Instances(JSONArray instanceDeletions, EC2Client ec2Client) throws JSONException {
+		for (int instanceIndex = 0; instanceIndex < instanceDeletions.length(); instanceIndex++) {
+			JSONObject instance = instanceDeletions.getJSONObject(instanceIndex);
+			ec2Client.terminateInstance(instance.getString("instanceId"));
+		}
 	}
 	
 	private void modifySecurityGroups(JSONArray sgModifications, EC2Client ec2Client) throws JSONException {

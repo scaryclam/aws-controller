@@ -60,6 +60,9 @@ public class EC2Client {
 	    Region region = Region.getRegion(Regions.EU_WEST_1);
 	    ec2Client.setRegion(region);
 		System.out.println("Credentials Loaded");
+		if (instances == null) {
+    		instances = new HashMap<String, Instance>();
+    	}
 	}
 	
 	public void getAllInstances() {
@@ -130,8 +133,13 @@ public class EC2Client {
 		System.out.println("Launching Instance");
 		RunInstancesResult result = ec2Client.runInstances(request);
 		System.out.println("Launched Instance");
+		if (instances == null) {
+    		instances = new HashMap<String, Instance>();
+    	}
+		
 		for (Instance instance : result.getReservation().getInstances()) {
-			instances.put(instance.getInstanceId(), instance);
+			String instanceId = instance.getInstanceId();
+			instances.put(instanceId, instance);
 		}
 		return result;
 	}
@@ -150,9 +158,9 @@ public class EC2Client {
 		List<String> instanceIds = new ArrayList<String>();
 		instanceIds.add(instanceId);
 		TerminateInstancesRequest request = new TerminateInstancesRequest(instanceIds);
-		System.out.println("Terminating Instance");
+		System.out.println("Terminating Instance " + instanceId);
 		ec2Client.terminateInstances(request);
-		System.out.println("Terminated Instance");
+		System.out.println("Terminated Instance " + instanceId);
 		instances.remove(instanceId);
 	}
 	
