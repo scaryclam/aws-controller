@@ -2,8 +2,10 @@ package uk.co.bluesuntech.delta;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import uk.co.bluesuntech.ec2.EC2Client;
 
@@ -41,12 +43,20 @@ public class DeltaApplier {
 			String type = instance.getString("instanceType");
 			String keyName = instance.getString("keyName");
 			JSONArray sgNames = instance.getJSONArray("securityGroups");
+			JSONObject instanceTags = instance.getJSONObject("tags");
 			ArrayList<String> securityGroups = new ArrayList<String>(); 
 			for (int sgNameIndex = 0; sgNameIndex < sgNames.length(); sgNameIndex++){
 				JSONObject securityGroup = sgNames.getJSONObject(sgNameIndex);
 				securityGroups.add(securityGroup.getString("groupName"));
-			} 
-			ec2Client.launchNewInstances(amiId, type, 1, keyName, securityGroups);
+			}
+			Map<String, String> tags = new HashMap<String, String>();
+			Iterator<String> keys = instanceTags.keys();
+			while (keys.hasNext()) {
+			    String key = keys.next();
+			    String value = instanceTags.getString(key);
+			    tags.put(key, value);
+			}
+			ec2Client.launchNewInstances(amiId, type, 1, keyName, securityGroups, tags);
 		}
 	}
 	

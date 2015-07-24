@@ -114,7 +114,16 @@ public class EC2Client {
 		return result.getReservation().getInstances();
 	}
 	
-	public void addTagsToInstance(Instance instance, Map<String, String> tags) {
+	public Collection<Instance> launchNewInstances(String AMI_ID, String type, Integer number, String keyName, Collection<String> sgNames, Map<String, String> tags) {
+		RunInstancesRequest request = this.getRunInstanceRequest(AMI_ID, type, number);
+		request.setKeyName(keyName);
+		request.setSecurityGroupIds(sgNames);
+		RunInstancesResult result = launchInstances(request, tags);
+		Collection<Instance> instances = result.getReservation().getInstances();
+		return instances;
+	}
+	
+	public void addTagsToInstance(String instanceId, Map<String, String> tags) {
 		CreateTagsRequest request = new CreateTagsRequest();
 		Collection<Tag> requestTags = new ArrayList<Tag>();
 		
@@ -123,7 +132,7 @@ public class EC2Client {
 			requestTags.add(tag);
 		}
 		
-		request.withResources(instance.getInstanceId());
+		request.withResources(instanceId);
 		request.setTags(requestTags);
 		
 		ec2Client.createTags(request);
@@ -132,13 +141,22 @@ public class EC2Client {
 	private RunInstancesResult launchInstances(RunInstancesRequest request) {
 		System.out.println("Launching Instance");
 		RunInstancesResult result = ec2Client.runInstances(request);
-		System.out.println("Launched Instance");
-		if (instances == null) {
-    		instances = new HashMap<String, Instance>();
-    	}
-		
+		System.out.println("Launched Instance");	
 		for (Instance instance : result.getReservation().getInstances()) {
 			String instanceId = instance.getInstanceId();
+			instances.put(instanceId, instance);
+		}
+		return result;
+	}
+	
+	private RunInstancesResult launchInstances(RunInstancesRequest request, Map<String, String> tags) {
+		System.out.println("Launching Instance");
+		RunInstancesResult result = ec2Client.runInstances(request);
+		System.out.println("Launched Instance");
+		ArrayList newInstances = new ArrayList<String>();
+		for (Instance instance : result.getReservation().getInstances()) {
+			String instanceId = instance.getInstanceId();
+			addTagsToInstance(instanceId, tags);
 			instances.put(instanceId, instance);
 		}
 		return result;
