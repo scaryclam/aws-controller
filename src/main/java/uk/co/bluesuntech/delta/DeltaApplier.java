@@ -2,6 +2,7 @@ package uk.co.bluesuntech.delta;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import uk.co.bluesuntech.ec2.EC2Client;
@@ -34,11 +35,34 @@ public class DeltaApplier {
 			JSONObject securityGroupInfo = sgModifications.getJSONObject(sgIndex);
 			String groupId = (String) securityGroupInfo.keys().next();
 			JSONObject securityGroup = securityGroupInfo.getJSONObject(groupId);
-			if (securityGroup.has("groupName")) {
+			if (securityGroup.has("tags")) {
 				// Update group name
-				System.out.println("Has Group Name Modification");
+				System.out.println("Has Tag Modification");
+				JSONObject keysAdded = securityGroup.getJSONObject("tags").getJSONObject("added");
+				JSONObject keysDeleted = securityGroup.getJSONObject("tags").getJSONObject("deleted");
+				JSONObject keysModified = securityGroup.getJSONObject("tags").getJSONObject("modified");
+				
+				Iterator addedKeys = keysAdded.keys();
+				while (addedKeys.hasNext()) {
+					String key = (String) addedKeys.next();
+					String value = keysAdded.getString(key);
+					System.out.println("Adding Key " + key + " for value " + value);
+				}
+				
+				Iterator deletedKeys = keysDeleted.keys();
+				while (deletedKeys.hasNext()) {
+					String key = (String) deletedKeys.next();
+					String value = keysDeleted.getString(key);
+					System.out.println("Delting Key " + key + " for value " + value);
+				}
+				
+				Iterator modifiedKeys = keysModified.keys();
+				while (modifiedKeys.hasNext()) {
+					String key = (String) modifiedKeys.next();
+					String value = keysModified.getString(key);
+					System.out.println("Modifying Key " + key + " for value " + value);
+				}
 			}
-			
 		}
 	}
 	

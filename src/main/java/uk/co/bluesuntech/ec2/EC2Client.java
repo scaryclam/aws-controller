@@ -271,4 +271,8 @@ public class EC2Client {
 		}
 		return instanceList;
 	}
+	
+	public void updateResourceTag(String resourceId, String tagKey, String tagValue) {
+		
+	}
 }
