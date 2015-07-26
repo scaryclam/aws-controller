@@ -10,6 +10,7 @@ import java.util.List;
 
 import uk.co.bluesuntech.delta.EC2InstanceDelta;
 import uk.co.bluesuntech.delta.EC2SecurityGroupDelta;
+import uk.co.bluesuntech.delta.RDSInstanceDelta;
 
 import com.amazonaws.util.json.JSONArray;
 import com.amazonaws.util.json.JSONException;
@@ -40,11 +41,14 @@ public class Importer {
 		ec2Delta.put("securityGroups", sgDelta);
 		ec2Delta.put("instances", instanceDelta);
 		
-		// Get new instances
-		// Get deleted instances
+		// RDS
+		JSONObject rdsDelta = new JSONObject();
+		JSONObject rdsInstanceDelta = new RDSInstanceDelta().getInstancesDelta(currentConfig, existingConfig);
+		rdsDelta.put("instances", rdsInstanceDelta);
 		
 		// Put add everything to delta
 		fullDelta.put("ec2", ec2Delta);
+		fullDelta.put("rds", rdsDelta);
 		
 		return fullDelta;
 	}

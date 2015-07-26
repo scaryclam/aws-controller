@@ -16,19 +16,19 @@ public class EC2InstanceDelta {
         JSONObject existingEc2Config = (JSONObject) existingConfig.get("ec2");
         JSONArray existingInstances = (JSONArray) existingEc2Config.get("instances");
         
-        // Get deleted SGs
+        // Get deleted instances
         List<JSONObject> deletedInstances = getDeletedInstances(currentInstance, existingInstances);
         
-        // Get new SGs
+        // Get new instances
         List<JSONObject> addedInstances = getAddedInstances(currentInstance, existingInstances);
         
         // TODO: Get modifications
         
-        JSONObject sgDelta = new JSONObject();
-        sgDelta.put("added", addedInstances);
-        sgDelta.put("deleted", deletedInstances);
+        JSONObject instanceDelta = new JSONObject();
+        instanceDelta.put("added", addedInstances);
+        instanceDelta.put("deleted", deletedInstances);
 
-        return sgDelta;
+        return instanceDelta;
     }
 
     public List<JSONObject> getAddedInstances(JSONArray currentEC2Instances, JSONArray existingEC2Instances) throws JSONException {

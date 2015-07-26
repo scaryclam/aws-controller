@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import uk.co.bluesuntech.ec2.EC2Client;
+import uk.co.bluesuntech.rds.RDSClient;
 
 import com.amazonaws.services.ec2.model.SecurityGroup;
 import com.amazonaws.util.json.JSONArray;
@@ -18,22 +19,54 @@ public class DeltaApplier {
 	public void applyDelta(JSONObject delta) throws JSONException {
 		System.out.println("Applying Changes");
 		JSONObject ec2Delta = delta.getJSONObject("ec2");
+		JSONObject rdsDelta = delta.getJSONObject("rds");
 		JSONObject securityGroupDelta = ec2Delta.getJSONObject("securityGroups");
 		JSONObject ec2InstanceDelta = ec2Delta.getJSONObject("instances");
+		JSONObject rdsInstanceDelta = rdsDelta.getJSONObject("instances");
 		
-		// Add Security Groups
+		// EC2
+		EC2Client ec2Client = new EC2Client();
 		JSONArray sgAdditions = securityGroupDelta.getJSONArray("added");
 		JSONArray sgDeletions = securityGroupDelta.getJSONArray("deleted");
 		JSONArray sgModifications = securityGroupDelta.getJSONArray("modified");
 		JSONArray ec2InstanceAdditions = ec2InstanceDelta.getJSONArray("added");
 		JSONArray ec2InstanceDeletions = ec2InstanceDelta.getJSONArray("deleted");
-		EC2Client ec2Client = new EC2Client();
 		
 		addSecurityGroups(sgAdditions, ec2Client);
 		deleteSecurityGroups(sgDeletions, ec2Client);
 		addEC2Instances(ec2InstanceAdditions, ec2Client);
 		deleteEC2Instances(ec2InstanceDeletions, ec2Client);
 		modifySecurityGroups(sgModifications, ec2Client);
+		
+		// RDS
+		RDSClient rdsClient = new RDSClient();
+		JSONArray rdsInstanceAdditions = rdsInstanceDelta.getJSONArray("added");
+		JSONArray rdsInstanceDeletions = rdsInstanceDelta.getJSONArray("deleted");
+		
+		addRDSInstances(rdsInstanceAdditions, rdsClient);
+		deleteRDSInstances(rdsInstanceDeletions, rdsClient);
+		
+	}
+	
+	private void addRDSInstances(JSONArray instanceAdditions, RDSClient rdsClient) throws JSONException {
+		for (int instanceIndex = 0; instanceIndex < instanceAdditions.length(); instanceIndex++) {
+			JSONObject instance = instanceAdditions.getJSONObject(instanceIndex);
+			String dbName = instance.getString("dbName");
+			String engine = instance.getString("engine");
+			String masterUsername = instance.getString("masterUsername");
+			String masterUserPassword = instance.getString("masterPassword");
+			String dbInstanceId = instance.getString("instanceId");
+			String dBInstanceClass = instance.getString("instanceClass");
+			Integer allocatedStorage = instance.getInt("allocatedStorage");
+			rdsClient.createDBInstance(dbName, engine, masterUsername, masterUserPassword, dbInstanceId, dBInstanceClass, allocatedStorage);
+		}
+	}
+	
+	private void deleteRDSInstances(JSONArray instanceDeletions, RDSClient rdsClient) throws JSONException {
+		for (int instanceIndex = 0; instanceIndex < instanceDeletions.length(); instanceIndex++) {
+			JSONObject instance = instanceDeletions.getJSONObject(instanceIndex);
+			rdsClient.terminateDBInstance(instance.getString("instanceId"), true);
+		}
 	}
 	
 	private void addEC2Instances(JSONArray instanceAdditions, EC2Client ec2Client) throws JSONException {
