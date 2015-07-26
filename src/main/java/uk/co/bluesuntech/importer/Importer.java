@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import uk.co.bluesuntech.delta.AutoscaleDelta;
 import uk.co.bluesuntech.delta.EC2InstanceDelta;
 import uk.co.bluesuntech.delta.EC2SecurityGroupDelta;
 import uk.co.bluesuntech.delta.RDSInstanceDelta;
@@ -46,9 +47,14 @@ public class Importer {
 		JSONObject rdsInstanceDelta = new RDSInstanceDelta().getInstancesDelta(currentConfig, existingConfig);
 		rdsDelta.put("instances", rdsInstanceDelta);
 		
+		// Autoscaling
+		JSONObject autoscaleDelta = new JSONObject();
+		JSONObject autoscaleAlarmDelta = new AutoscaleDelta().getAlarmDelta(currentConfig, existingConfig);
+		
 		// Put add everything to delta
 		fullDelta.put("ec2", ec2Delta);
 		fullDelta.put("rds", rdsDelta);
+		fullDelta.put("autoscale", autoscaleDelta);
 		
 		return fullDelta;
 	}

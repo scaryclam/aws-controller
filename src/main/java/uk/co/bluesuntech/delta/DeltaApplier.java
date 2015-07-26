@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import uk.co.bluesuntech.autoscaling.AutoscaleClient;
 import uk.co.bluesuntech.ec2.EC2Client;
 import uk.co.bluesuntech.rds.RDSClient;
 
@@ -18,14 +19,12 @@ import com.amazonaws.util.json.JSONObject;
 public class DeltaApplier {
 	public void applyDelta(JSONObject delta) throws JSONException {
 		System.out.println("Applying Changes");
-		JSONObject ec2Delta = delta.getJSONObject("ec2");
-		JSONObject rdsDelta = delta.getJSONObject("rds");
-		JSONObject securityGroupDelta = ec2Delta.getJSONObject("securityGroups");
-		JSONObject ec2InstanceDelta = ec2Delta.getJSONObject("instances");
-		JSONObject rdsInstanceDelta = rdsDelta.getJSONObject("instances");
 		
 		// EC2
 		EC2Client ec2Client = new EC2Client();
+		JSONObject ec2Delta = delta.getJSONObject("ec2");
+		JSONObject securityGroupDelta = ec2Delta.getJSONObject("securityGroups");
+		JSONObject ec2InstanceDelta = ec2Delta.getJSONObject("instances");
 		JSONArray sgAdditions = securityGroupDelta.getJSONArray("added");
 		JSONArray sgDeletions = securityGroupDelta.getJSONArray("deleted");
 		JSONArray sgModifications = securityGroupDelta.getJSONArray("modified");
@@ -40,12 +39,17 @@ public class DeltaApplier {
 		
 		// RDS
 		RDSClient rdsClient = new RDSClient();
+		JSONObject rdsDelta = delta.getJSONObject("rds");
+		JSONObject rdsInstanceDelta = rdsDelta.getJSONObject("instances");
 		JSONArray rdsInstanceAdditions = rdsInstanceDelta.getJSONArray("added");
 		JSONArray rdsInstanceDeletions = rdsInstanceDelta.getJSONArray("deleted");
 		
 		addRDSInstances(rdsInstanceAdditions, rdsClient);
 		deleteRDSInstances(rdsInstanceDeletions, rdsClient);
 		
+		// Autoscaling
+		AutoscaleClient autoscaleClient = new AutoscaleClient();
+		JSONObject autoscaleDelta = delta.getJSONObject("autoscale");		
 	}
 	
 	private void addRDSInstances(JSONArray instanceAdditions, RDSClient rdsClient) throws JSONException {

@@ -12,6 +12,7 @@ import java.util.List;
 import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
 
+import uk.co.bluesuntech.autoscaling.AutoscaleClient;
 import uk.co.bluesuntech.ec2.EC2Client;
 import uk.co.bluesuntech.rds.RDSClient;
 
@@ -20,6 +21,7 @@ public class Exporter {
 	public JSONObject exportExploration() throws JSONException {
 		EC2Client ec2Client = new EC2Client();
 		RDSClient rdsClient = new RDSClient();
+		AutoscaleClient autoscaleClient = new AutoscaleClient();
 		
 		JSONObject configuration = new JSONObject();
 		
@@ -36,6 +38,19 @@ public class Exporter {
 		List<JSONObject> rdsInstances = rdsClient.getRDSInstancesAsJson();
 		rdsConfig.put("instances", rdsInstances);
 		configuration.put("rds", rdsConfig);
+		
+		// Autoscale
+		JSONObject autoscaleConfig = new JSONObject();
+		List<JSONObject> autoscaleAlarms = autoscaleClient.getAlarmsAsJson();
+		List<JSONObject> autoscaleGroups = autoscaleClient.getGroupsAsJson();
+		List<JSONObject> autoscaleLaunchConfigs = autoscaleClient.getLaunchConfigurationsAsJson();
+		List<JSONObject> autoscalePolicies = autoscaleClient.getAutoscalingPoliciesAsJson();
+		
+		autoscaleConfig.put("alarms", autoscaleAlarms);
+		autoscaleConfig.put("groups", autoscaleGroups);
+		autoscaleConfig.put("launchConfigs", autoscaleLaunchConfigs);
+		autoscaleConfig.put("policies", autoscalePolicies);
+		configuration.put("autoscale", autoscaleConfig);
 		
 		return configuration;
 	}
