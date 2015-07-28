@@ -41,18 +41,55 @@ public class Application {
 		setup = line;
 	}
 	
+	private void executeCreation() {
+	    // Creation mode
+	}
+	
+	private void executeTearDown() {
+        // Tear down mode
+    }
+	
+	private void executeDelta() {
+        // Delta mode
+    }
+	
 	private void execute() throws IOException, JSONException {
+	    /* TODO: change the application to allow the following modes:
+	     *  - Creating an environment
+	     *  - Tearing down an environment
+	     *  - Applying a delta of an existing environment
+	     */
+	    String environment = setup.getOptionValue('e', "default");
 		boolean help = setup.hasOption('h');
-		boolean hasInput = setup.hasOption('i');
-		boolean hasOutput = setup.hasOption('o');
 		boolean noInput = setup.hasOption('y');
 		boolean showDiff = setup.hasOption('d');
 		boolean dryRun = setup.hasOption("dry-run") || setup.hasOption('D');
 		
+		boolean hasInput = setup.hasOption('i');
+		boolean hasOutput = setup.hasOption('o');
+		
+		String mode = setup.getOptionValue("mode");
+		
 		if (help) {
-			HelpFormatter formatter = new HelpFormatter();
-			formatter.printHelp("java -jar aws-controller.jar", options);
-			System.exit(0);
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp("java -jar aws-controller.jar", options);
+            System.exit(0);
+        }
+		
+		switch(mode) {
+		   case "create":
+		       executeCreation();
+		       break;
+		   case "teardown":
+		       executeTearDown();
+               break;
+		   case "delta":
+		       executeDelta();
+               break;
+		   default:
+		       HelpFormatter formatter = new HelpFormatter();
+	           formatter.printHelp("java -jar aws-controller.jar", options);
+	           System.exit(0);
 		}
 		
 		// We always need to export the current config somewhere, whether it's to screen or
@@ -64,12 +101,14 @@ public class Application {
 		System.out.println(currentConfig.toString(4));
 		
 		JSONObject delta = new JSONObject();
+		JSONObject newFullConfig = null;
 		
 		if (hasInput) {
-			Importer importer = new Importer();
+		    Importer importer = new Importer();
 			String inputFile = setup.getOptionValue('i');
 			System.out.println("Input file set, attempting to load configuration");
-			JSONObject newConfig = importer.readConfigFromFile(inputFile);
+			newFullConfig = importer.readConfigFromFile(inputFile);
+			JSONObject newConfig = importer.getEnvironmentConfig(newFullConfig, environment);
 			delta = importer.createDelta(newConfig, currentConfig);
 		}
 		
@@ -84,7 +123,10 @@ public class Application {
 		if (hasOutput) {
 			System.out.println("Output option set. Attempting to write configuration");
 			String outputFile = setup.getOptionValue('o');
-			exporter.writeConfig(outputFile, changedConfig);
+			if (newFullConfig == null) {
+			    newFullConfig = exporter.createEmptyConfig();
+			}
+			exporter.writeConfig(outputFile, newFullConfig, changedConfig, environment);
 		}
 		
 		if (!dryRun) {

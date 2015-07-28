@@ -55,26 +55,34 @@ public class Exporter {
 		return configuration;
 	}
 	
-	public JSONObject createEmptyConfig() throws JSONException{
-		JSONObject configuration = new JSONObject();
-		JSONObject ec2Config = new JSONObject();
-		JSONObject rdsConfig = new JSONObject();
-		
-		ec2Config.put("instances", new JSONObject());
-		ec2Config.put("securityGroups", new JSONObject());
-		
-		rdsConfig.put("instances", new JSONObject());
-		
-		configuration.put("ec2", ec2Config);
-		configuration.put("rds", rdsConfig);
-		
-		return configuration;
+	private JSONObject createEmptyEnv() throws JSONException {
+	    JSONObject configuration = new JSONObject();
+        JSONObject ec2Config = new JSONObject();
+        JSONObject rdsConfig = new JSONObject();
+        
+        ec2Config.put("instances", new JSONObject());
+        ec2Config.put("securityGroups", new JSONObject());
+        
+        rdsConfig.put("instances", new JSONObject());
+        
+        configuration.put("ec2", ec2Config);
+        configuration.put("rds", rdsConfig);
+        return configuration;
 	}
 	
-	public void writeConfig(String fileName, JSONObject configuration) throws IOException, JSONException {
+	public JSONObject createEmptyConfig() throws JSONException {
+	    JSONObject configuration = createEmptyEnv();
+	    JSONObject fullConfiguration = new JSONObject();
+		fullConfiguration.put("default", configuration);
+		
+		return fullConfiguration;
+	}
+	
+	public void writeConfig(String fileName, JSONObject fullConfiguration, JSONObject configuration, String environment) throws IOException, JSONException {
 		Path path = Paths.get(fileName);
+		fullConfiguration.put(environment, configuration);
 		try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-		    writer.write(configuration.toString(4));
+		    writer.write(fullConfiguration.toString(4));
 		}
 	}
 }

@@ -28,6 +28,28 @@ public class Importer {
 		return importedJson;
 	}
 	
+	public JSONObject getEnvironmentConfig(JSONObject configuration, String environment) throws JSONException {
+	    if (!configuration.has(environment)) {
+	        return createEmptyEnv();
+	    }
+	    return configuration.getJSONObject(environment);
+	}
+	
+	private JSONObject createEmptyEnv() throws JSONException {
+        JSONObject configuration = new JSONObject();
+        JSONObject ec2Config = new JSONObject();
+        JSONObject rdsConfig = new JSONObject();
+        
+        ec2Config.put("instances", new JSONArray());
+        ec2Config.put("securityGroups", new JSONArray());
+        
+        rdsConfig.put("instances", new JSONArray());
+        
+        configuration.put("ec2", ec2Config);
+        configuration.put("rds", rdsConfig);
+        return configuration;
+    }
+	
 	public JSONObject createDelta(JSONObject currentConfig, JSONObject existingConfig) throws JSONException {
 		/* currentConfig is the config loaded from file. existingConfig is the config that actually
 		 * exists on AWS.

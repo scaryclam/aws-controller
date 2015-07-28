@@ -2,6 +2,7 @@ package uk.co.bluesuntech.config;
 
 import org.apache.commons.cli.Options;
 
+
 public class OptionFactory {
 	public static Options buildOptions() {
 		Options options = new Options();
@@ -13,6 +14,8 @@ public class OptionFactory {
 		options.addOption("D", "dry-run", false, "Perform all tasks normally, but do not apply changes");
 		options.addOption("y", "no-input", false,
 				"Do not ask for confirmation");
+		options.addOption("e", "env", true, "Use an environment that is not \"default\"");
+		options.addOption("m", "mode", true, "The mode to use. Options are \"create\", \"teardown\" and \"delta\"");
 		return options;
 	}
 }
