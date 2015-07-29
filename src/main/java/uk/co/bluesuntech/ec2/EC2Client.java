@@ -266,6 +266,7 @@ public class EC2Client {
 			currentSg.put("groupName", securityGroup.getGroupName());
 			currentSg.put("permissions", securityGroup.getIpPermissions());
 			currentSg.put("permissionsEgress", securityGroup.getIpPermissionsEgress());
+			currentSg.put("groupDescription", securityGroup.getDescription());
 			JSONObject tags = new JSONObject();
 			for (Tag tag : securityGroup.getTags()) {
 				tags.put(tag.getKey(), tag.getValue());

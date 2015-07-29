@@ -25,6 +25,7 @@ import com.amazonaws.util.json.JSONObject;
 import uk.co.bluesuntech.config.OptionFactory;
 import uk.co.bluesuntech.delta.DeltaApplier;
 import uk.co.bluesuntech.ec2.EC2Client;
+import uk.co.bluesuntech.ec2.EC2EnvironmentCreator;
 import uk.co.bluesuntech.elasticloadbalancer.LoadBalancerClient;
 import uk.co.bluesuntech.export.Exporter;
 import uk.co.bluesuntech.importer.Importer;
@@ -41,8 +42,35 @@ public class Application {
 		setup = line;
 	}
 	
-	private void executeCreation() {
+	private void executeCreation(String environment) throws JSONException, IOException {
 	    // Creation mode
+	    Exporter exporter = new Exporter();
+        JSONObject currentConfig = exporter.exportExploration();
+        boolean hasOutput = setup.hasOption('o');
+        boolean hasInput = setup.hasOption('i');
+        
+        if (!hasInput) {
+            System.out.println("ERROR: you must provide an input file");
+        }
+        
+        Importer importer = new Importer();
+        String inputFile = setup.getOptionValue('i');
+        System.out.println("Input file set, attempting to load configuration");
+        JSONObject newFullConfig = importer.readConfigFromFile(inputFile);
+        JSONObject fullConfig = newFullConfig.getJSONObject(environment); 
+        
+        // Create the things!
+        EC2EnvironmentCreator ec2Creator = new EC2EnvironmentCreator();
+        ec2Creator.createEnvFromConfig(fullConfig.getJSONObject("ec2"));
+        
+        // Write the new configuration out
+        if (hasOutput) {
+            System.out.println("Output option set. Attempting to write configuration");
+            String outputFile = setup.getOptionValue('o');
+            // Re-scan the infrastructure
+            currentConfig = exporter.exportExploration();
+            exporter.writeConfig(outputFile, fullConfig, currentConfig, environment);
+        }
 	}
 	
 	private void executeTearDown() {
@@ -65,11 +93,11 @@ public class Application {
         System.out.println(currentConfig.toString(4));
         
         if (hasInput) {
-          Importer importer = new Importer();
-          String inputFile = setup.getOptionValue('i');
-          System.out.println("Input file set, attempting to load configuration");
-          newFullConfig = importer.readConfigFromFile(inputFile);
-      }
+            Importer importer = new Importer();
+            String inputFile = setup.getOptionValue('i');
+            System.out.println("Input file set, attempting to load configuration");
+            newFullConfig = importer.readConfigFromFile(inputFile);
+        }
         
         if (hasOutput) {
             System.out.println("Output option set. Attempting to write configuration");
@@ -111,8 +139,14 @@ public class Application {
 		
 		switch(mode) {
 		   case "create":
-		       executeCreation();
-		       break;
+		       try {
+		           executeCreation(environment);
+		           break;
+		       } catch (Exception error) {
+		           HelpFormatter formatter = new HelpFormatter();
+		           formatter.printHelp("java -jar aws-controller.jar", options);
+		           System.exit(0);
+		       }
 		   case "teardown":
 		       executeTearDown();
                break;
