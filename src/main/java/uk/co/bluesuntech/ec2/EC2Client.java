@@ -226,6 +226,23 @@ public class EC2Client {
 		}
 	}
 	
+	public void addOutboundSecurityGroupIpPermission(String sgName, Collection<String> ipRanges, String protocol) {
+	    IpPermission ipPermission = new IpPermission();
+        
+        ipPermission.withIpRanges(ipRanges)
+                    .withIpProtocol(protocol);
+        AuthorizeSecurityGroupEgressRequest request = new AuthorizeSecurityGroupEgressRequest();
+        
+        request.withGroupId(sgName)
+               .withIpPermissions(ipPermission);
+        try {
+            ec2Client.authorizeSecurityGroupEgress(request);
+        } catch (AmazonServiceException e) {
+            // Do nothing in case of exception except log it happened
+            System.out.println("An Error Occured: " + e.getErrorMessage());
+        }
+	}
+	
 	public void addInboundSecurityGroupIpPermission(String sgId, Collection<String> ipRanges, String protocol, Integer startPort, Integer endPort) {
 		IpPermission ipPermission = new IpPermission();
 			    	
