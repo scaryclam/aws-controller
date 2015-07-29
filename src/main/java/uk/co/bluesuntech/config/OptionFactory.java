@@ -15,7 +15,7 @@ public class OptionFactory {
 		options.addOption("y", "no-input", false,
 				"Do not ask for confirmation");
 		options.addOption("e", "env", true, "Use an environment that is not \"default\"");
-		options.addOption("m", "mode", true, "The mode to use. Options are \"create\", \"teardown\" and \"delta\"");
+		options.addOption("m", "mode", true, "The mode to use. Options are \"create\", \"teardown\", \"explore\" and \"delta\"");
 		return options;
 	}
 }

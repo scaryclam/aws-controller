@@ -53,6 +53,35 @@ public class Application {
         // Delta mode
     }
 	
+	private void executeExplore(String environment) throws JSONException, IOException {
+	    // Exploratory mode
+	    Exporter exporter = new Exporter();
+        JSONObject currentConfig = exporter.exportExploration();
+        JSONObject newFullConfig = null;
+        boolean hasOutput = setup.hasOption('o');
+        boolean hasInput = setup.hasOption('i');
+        
+        System.out.println("Current configuration:");
+        System.out.println(currentConfig.toString(4));
+        
+        if (hasInput) {
+          Importer importer = new Importer();
+          String inputFile = setup.getOptionValue('i');
+          System.out.println("Input file set, attempting to load configuration");
+          newFullConfig = importer.readConfigFromFile(inputFile);
+          JSONObject newConfig = importer.getEnvironmentConfig(newFullConfig, environment);
+      }
+        
+        if (hasOutput) {
+            System.out.println("Output option set. Attempting to write configuration");
+            String outputFile = setup.getOptionValue('o');
+            if (newFullConfig == null) {
+                newFullConfig = exporter.createEmptyConfig();
+            }
+            exporter.writeConfig(outputFile, newFullConfig, currentConfig, environment);
+        }
+	}
+	
 	private void execute() throws IOException, JSONException {
 	    /* TODO: change the application to allow the following modes:
 	     *  - Creating an environment
@@ -61,12 +90,12 @@ public class Application {
 	     */
 	    String environment = setup.getOptionValue('e', "default");
 		boolean help = setup.hasOption('h');
-		boolean noInput = setup.hasOption('y');
-		boolean showDiff = setup.hasOption('d');
-		boolean dryRun = setup.hasOption("dry-run") || setup.hasOption('D');
+		//boolean noInput = setup.hasOption('y');
+		//boolean showDiff = setup.hasOption('d');
+		//boolean dryRun = setup.hasOption("dry-run") || setup.hasOption('D');
 		
-		boolean hasInput = setup.hasOption('i');
-		boolean hasOutput = setup.hasOption('o');
+		//boolean hasInput = setup.hasOption('i');
+		//boolean hasOutput = setup.hasOption('o');
 		
 		String mode = setup.getOptionValue("mode");
 		
@@ -75,6 +104,11 @@ public class Application {
             formatter.printHelp("java -jar aws-controller.jar", options);
             System.exit(0);
         }
+		
+		// We always need to export the current config somewhere, whether it's to screen or
+        // to file, so go get the current landscape.
+        //Exporter exporter = new Exporter();
+        //JSONObject currentConfig = exporter.exportExploration();
 		
 		switch(mode) {
 		   case "create":
@@ -86,69 +120,64 @@ public class Application {
 		   case "delta":
 		       executeDelta();
                break;
+		   case "explore":
+		       executeExplore(environment);
+		       break;
 		   default:
 		       HelpFormatter formatter = new HelpFormatter();
 	           formatter.printHelp("java -jar aws-controller.jar", options);
 	           System.exit(0);
 		}
 		
-		// We always need to export the current config somewhere, whether it's to screen or
-		// to file, so go get the current landscape.
-		Exporter exporter = new Exporter();
-		JSONObject currentConfig = exporter.exportExploration();
-		
-		System.out.println("Current configuration:");
-		System.out.println(currentConfig.toString(4));
-		
-		JSONObject delta = new JSONObject();
-		JSONObject newFullConfig = null;
-		
-		if (hasInput) {
-		    Importer importer = new Importer();
-			String inputFile = setup.getOptionValue('i');
-			System.out.println("Input file set, attempting to load configuration");
-			newFullConfig = importer.readConfigFromFile(inputFile);
-			JSONObject newConfig = importer.getEnvironmentConfig(newFullConfig, environment);
-			delta = importer.createDelta(newConfig, currentConfig);
-		}
-		
-		JSONObject changedConfig = currentConfig;
-		
-		if (showDiff) {
-			// Tell user what changes will be made
-			System.out.println("Changes to be made:");
-			System.out.println(delta.toString(4));
-		}
-		
-		if (hasOutput) {
-			System.out.println("Output option set. Attempting to write configuration");
-			String outputFile = setup.getOptionValue('o');
-			if (newFullConfig == null) {
-			    newFullConfig = exporter.createEmptyConfig();
-			}
-			exporter.writeConfig(outputFile, newFullConfig, changedConfig, environment);
-		}
-		
-		if (!dryRun) {
-			Boolean applyChanges = false;
-			if (noInput) {
-				applyChanges = true;
-			} else {
-				System.out.println("Would you like to apply the changes? [N/y]");
-				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-			    String input = reader.readLine();
-				if (input.toLowerCase().equals("y")) {
-					applyChanges = true;
-				}
-			}
-			if (applyChanges) {
-			    // Apply Changes
-			    DeltaApplier applier = new DeltaApplier();
-			    applier.applyDelta(delta);
-			} else {
-				System.out.println("No changes have been applied");
-			}
-		}
+//		JSONObject delta = new JSONObject();
+//		JSONObject newFullConfig = null;
+//		
+//		if (hasInput) {
+//		    Importer importer = new Importer();
+//			String inputFile = setup.getOptionValue('i');
+//			System.out.println("Input file set, attempting to load configuration");
+//			newFullConfig = importer.readConfigFromFile(inputFile);
+//			JSONObject newConfig = importer.getEnvironmentConfig(newFullConfig, environment);
+//			delta = importer.createDelta(newConfig, currentConfig);
+//		}
+//		
+//		JSONObject changedConfig = currentConfig;
+//		
+//		if (showDiff) {
+//			// Tell user what changes will be made
+//			System.out.println("Changes to be made:");
+//			System.out.println(delta.toString(4));
+//		}
+//		
+//		if (hasOutput) {
+//			System.out.println("Output option set. Attempting to write configuration");
+//			String outputFile = setup.getOptionValue('o');
+//			if (newFullConfig == null) {
+//			    newFullConfig = exporter.createEmptyConfig();
+//			}
+//			exporter.writeConfig(outputFile, newFullConfig, changedConfig, environment);
+//		}
+//		
+//		if (!dryRun) {
+//			Boolean applyChanges = false;
+//			if (noInput) {
+//				applyChanges = true;
+//			} else {
+//				System.out.println("Would you like to apply the changes? [N/y]");
+//				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+//			    String input = reader.readLine();
+//				if (input.toLowerCase().equals("y")) {
+//					applyChanges = true;
+//				}
+//			}
+//			if (applyChanges) {
+//			    // Apply Changes
+//			    DeltaApplier applier = new DeltaApplier();
+//			    applier.applyDelta(delta);
+//			} else {
+//				System.out.println("No changes have been applied");
+//			}
+//		}
 
 		//LoadBalancerClient lbClient = new LoadBalancerClient();
 		
