@@ -69,7 +69,6 @@ public class Application {
           String inputFile = setup.getOptionValue('i');
           System.out.println("Input file set, attempting to load configuration");
           newFullConfig = importer.readConfigFromFile(inputFile);
-          JSONObject newConfig = importer.getEnvironmentConfig(newFullConfig, environment);
       }
         
         if (hasOutput) {
