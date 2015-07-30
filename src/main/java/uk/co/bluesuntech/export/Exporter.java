@@ -14,6 +14,7 @@ import com.amazonaws.util.json.JSONObject;
 
 import uk.co.bluesuntech.autoscaling.AutoscaleClient;
 import uk.co.bluesuntech.ec2.EC2Client;
+import uk.co.bluesuntech.elasticloadbalancer.LoadBalancerClient;
 import uk.co.bluesuntech.rds.RDSClient;
 
 
@@ -21,9 +22,16 @@ public class Exporter {
 	public JSONObject exportExploration() throws JSONException {
 		EC2Client ec2Client = new EC2Client();
 		RDSClient rdsClient = new RDSClient();
+		LoadBalancerClient elbClient = new LoadBalancerClient();
 		AutoscaleClient autoscaleClient = new AutoscaleClient();
 		
 		JSONObject configuration = new JSONObject();
+		
+		// ELB
+		JSONObject elbConfig = new JSONObject();
+		List<JSONObject> loadBalancers = elbClient.getLoadBalancersAsJson();
+		elbConfig.put("loadBalancers", loadBalancers);
+		configuration.put("elb", elbConfig);
 		
 		// EC2
 		JSONObject ec2Config = new JSONObject();

@@ -60,6 +60,7 @@ public class Application {
         JSONObject fullConfig = newFullConfig.getJSONObject(environment); 
         
         // Create the things!
+        // EC2
         EC2EnvironmentCreator ec2Creator = new EC2EnvironmentCreator();
         ec2Creator.createEnvFromConfig(fullConfig.getJSONObject("ec2"));
         
