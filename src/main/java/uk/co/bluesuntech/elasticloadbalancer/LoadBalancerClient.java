@@ -51,7 +51,7 @@ public class LoadBalancerClient {
 	    return result.getLoadBalancerDescriptions();
 	}
 	
-	// JSON
+	// JSON Fetchers
 	public List<JSONObject> getLoadBalancersAsJson() throws JSONException {
 	    List<JSONObject> loadBalancers = new ArrayList<JSONObject>();
 	    List<LoadBalancerDescription> elbs = getLoadBalancers();
@@ -66,10 +66,10 @@ public class LoadBalancerClient {
             currentElb.put("healthCheck", elb.getHealthCheck());
             currentElb.put("instances", elb.getInstances());
             currentElb.put("listenerDescriptions", elb.getListenerDescriptions());
-            currentElb.put("Name", elb.getLoadBalancerName());
+            currentElb.put("name", elb.getLoadBalancerName());
             currentElb.put("policies", elb.getPolicies());
             currentElb.put("scheme", elb.getScheme());
-            currentElb.put("secutiryGroups", elb.getSecurityGroups());
+            currentElb.put("securityGroups", elb.getSecurityGroups());
             currentElb.put("sourceSecurityGroup", elb.getSourceSecurityGroup());
             currentElb.put("subnets", elb.getSubnets());
             currentElb.put("vpcId", elb.getVPCId());

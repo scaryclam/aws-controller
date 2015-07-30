@@ -26,6 +26,7 @@ import uk.co.bluesuntech.config.OptionFactory;
 import uk.co.bluesuntech.delta.DeltaApplier;
 import uk.co.bluesuntech.ec2.EC2Client;
 import uk.co.bluesuntech.ec2.EC2EnvironmentCreator;
+import uk.co.bluesuntech.elasticloadbalancer.ELBEnvironmentCreator;
 import uk.co.bluesuntech.elasticloadbalancer.LoadBalancerClient;
 import uk.co.bluesuntech.export.Exporter;
 import uk.co.bluesuntech.importer.Importer;
@@ -63,6 +64,11 @@ public class Application {
         // EC2
         EC2EnvironmentCreator ec2Creator = new EC2EnvironmentCreator();
         ec2Creator.createEnvFromConfig(fullConfig.getJSONObject("ec2"));
+        
+        // ELB
+        ELBEnvironmentCreator elbCreator = new ELBEnvironmentCreator();
+        elbCreator.createEnvFromConfig(fullConfig.getJSONObject("elb"));
+        
         
         // Write the new configuration out
         if (hasOutput) {
