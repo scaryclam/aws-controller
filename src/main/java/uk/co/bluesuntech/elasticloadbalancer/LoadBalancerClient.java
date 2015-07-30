@@ -10,6 +10,8 @@ import com.amazonaws.services.elasticloadbalancing.model.CreateLoadBalancerListe
 import com.amazonaws.services.elasticloadbalancing.model.CreateLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.CreateLoadBalancerResult;
 import com.amazonaws.services.elasticloadbalancing.model.Listener;
+import com.amazonaws.services.elasticloadbalancing.model.Tag;
+
 
 public class LoadBalancerClient {
 	private AmazonElasticLoadBalancing lbClient;
@@ -19,15 +21,17 @@ public class LoadBalancerClient {
 	    lbClient.setRegion(region);
 	}
 	
-	public void createLoadBalancer(String loadBalancerName, Collection<String> securityGroups, Collection<Listener> listeners, Collection<String> availabilityZones) {
+	public CreateLoadBalancerResult createLoadBalancer(String loadBalancerName, Collection<String> securityGroups, Collection<Listener> listeners, Collection<String> availabilityZones, Collection<Tag> tags) {
 		CreateLoadBalancerRequest request = new CreateLoadBalancerRequest();
-		request.setLoadBalancerName(loadBalancerName);
-		request.setSecurityGroups(securityGroups);
-		request.setListeners(listeners);
-		request.setAvailabilityZones(availabilityZones);
+		request.withLoadBalancerName(loadBalancerName)
+		       .withSecurityGroups(securityGroups)
+		       .withListeners(listeners)
+		       .withAvailabilityZones(availabilityZones)
+		       .withTags(tags);
 		System.out.println("Creating Load Balancer");
 		CreateLoadBalancerResult result = lbClient.createLoadBalancer(request);
 		System.out.println("Created Load Balancer");
+		return result;
 	}
 	
 	public Listener createListener(String protocol, Integer lbPort, Integer instancePort) {
