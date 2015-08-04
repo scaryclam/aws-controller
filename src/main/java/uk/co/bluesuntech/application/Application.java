@@ -31,6 +31,7 @@ import uk.co.bluesuntech.elasticloadbalancer.LoadBalancerClient;
 import uk.co.bluesuntech.export.Exporter;
 import uk.co.bluesuntech.importer.Importer;
 import uk.co.bluesuntech.rds.RDSClient;
+import uk.co.bluesuntech.rds.RDSEnvironmentCreator;
 
 
 public class Application {
@@ -68,6 +69,10 @@ public class Application {
         // ELB
         ELBEnvironmentCreator elbCreator = new ELBEnvironmentCreator();
         elbCreator.createEnvFromConfig(fullConfig.getJSONObject("elb"));
+        
+        // RDS
+        RDSEnvironmentCreator rdsCreator = new RDSEnvironmentCreator();
+        rdsCreator.createEnvFromConfig(fullConfig.getJSONObject("rds"));
         
         
         // Write the new configuration out

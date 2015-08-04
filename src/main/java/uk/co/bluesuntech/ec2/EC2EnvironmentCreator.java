@@ -2,6 +2,7 @@ package uk.co.bluesuntech.ec2;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -63,6 +64,12 @@ public class EC2EnvironmentCreator {
                 sgNames.add(sg.getString("groupId"));
             }
             Map<String, String> tags = new HashMap<String, String>();
+            JSONObject instanceTags = instance.getJSONObject("tags");
+            Iterator<String> keys = instanceTags.keys();
+            while (keys.hasNext()) {
+                String key = keys.next();
+                tags.put(key, instanceTags.getString(key));
+            }
             ec2Client.launchNewInstances(amiId, type, number, keyName, sgNames, tags);
         }
     }
