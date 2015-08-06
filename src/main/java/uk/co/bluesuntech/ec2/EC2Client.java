@@ -26,6 +26,8 @@ import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
 import com.amazonaws.services.ec2.model.CreateSecurityGroupResult;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.DeleteSecurityGroupRequest;
+import com.amazonaws.services.ec2.model.DescribeInstanceAttributeRequest;
+import com.amazonaws.services.ec2.model.DescribeInstanceAttributeResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DescribeSecurityGroupsResult;
@@ -122,6 +124,16 @@ public class EC2Client {
 		Collection<Instance> instances = result.getReservation().getInstances();
 		return instances;
 	}
+	
+	public Collection<Instance> launchNewInstances(String AMI_ID, String type, Integer number, String keyName, Collection<String> sgNames, Map<String, String> tags, String userData) {
+        RunInstancesRequest request = this.getRunInstanceRequest(AMI_ID, type, number);
+        request.setKeyName(keyName);
+        request.setSecurityGroupIds(sgNames);
+        request.setUserData(userData);
+        RunInstancesResult result = launchInstances(request, tags);
+        Collection<Instance> instances = result.getReservation().getInstances();
+        return instances;
+    }
 	
 	public void addTagsToInstance(String instanceId, Map<String, String> tags) {
 		CreateTagsRequest request = new CreateTagsRequest();
@@ -305,6 +317,11 @@ public class EC2Client {
 			currentInstance.put("keyName", instance.getKeyName());
 			currentInstance.put("instanceType", instance.getInstanceType());
 			currentInstance.put("state", instance.getState());
+			DescribeInstanceAttributeRequest request = new DescribeInstanceAttributeRequest();
+			request.withInstanceId(instance.getInstanceId())
+			       .withAttribute("userData");
+			DescribeInstanceAttributeResult result = ec2Client.describeInstanceAttribute(request);
+			currentInstance.put("userData", result.getInstanceAttribute());
 			JSONObject tags = new JSONObject();
 			for (Tag tag : instance.getTags()) {
 				tags.put(tag.getKey(), tag.getValue());

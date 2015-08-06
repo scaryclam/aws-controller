@@ -57,6 +57,7 @@ public class EC2EnvironmentCreator {
             String type = instance.getString("instanceType"); 
             Integer number = 1;
             String keyName = instance.getString("keyName");
+            String userData = instance.getString("userData");
             JSONArray securityGroups = instance.getJSONArray("securityGroups");
             List<String> sgNames = new ArrayList<String>();
             for (int i = 0; i < securityGroups.length(); i++) {
@@ -70,7 +71,7 @@ public class EC2EnvironmentCreator {
                 String key = keys.next();
                 tags.put(key, instanceTags.getString(key));
             }
-            ec2Client.launchNewInstances(amiId, type, number, keyName, sgNames, tags);
+            ec2Client.launchNewInstances(amiId, type, number, keyName, sgNames, tags, userData);
         }
     }
     
