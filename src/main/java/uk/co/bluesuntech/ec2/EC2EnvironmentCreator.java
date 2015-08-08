@@ -44,6 +44,9 @@ public class EC2EnvironmentCreator {
             JSONArray instanceSecurityGroups = instance.getJSONArray("securityGroups");
             for (int i = 0; i < instanceSecurityGroups.length(); i++) {
                 JSONObject instanceGroup = instanceSecurityGroups.getJSONObject(i);
+                if (!sgNames.containsKey(instanceGroup.get("groupName"))) {
+                	continue;
+                }
                 instanceGroup.put("groupId", sgNames.get(instanceGroup.get("groupName")));
             }
         }

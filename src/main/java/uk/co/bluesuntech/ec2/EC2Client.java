@@ -32,6 +32,7 @@ import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
 import com.amazonaws.services.ec2.model.DescribeSecurityGroupsResult;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.InstanceAttribute;
 import com.amazonaws.services.ec2.model.IpPermission;
 import com.amazonaws.services.ec2.model.Reservation;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
@@ -321,7 +322,8 @@ public class EC2Client {
 			request.withInstanceId(instance.getInstanceId())
 			       .withAttribute("userData");
 			DescribeInstanceAttributeResult result = ec2Client.describeInstanceAttribute(request);
-			currentInstance.put("userData", result.getInstanceAttribute());
+			InstanceAttribute userDataAttribute = result.getInstanceAttribute();
+			currentInstance.put("userData", userDataAttribute.getUserData());
 			JSONObject tags = new JSONObject();
 			for (Tag tag : instance.getTags()) {
 				tags.put(tag.getKey(), tag.getValue());
