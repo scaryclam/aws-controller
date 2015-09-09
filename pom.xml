@@ -2,8 +2,8 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>uk.co.bluesuntech</groupId>
-	<artifactId>AwsManager</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<artifactId>aws-controller</artifactId>
+	<version>0.1</version>
 	<properties>
 		<commons.io.version>2.4</commons.io.version>
 		<commons.collections.version>4.0</commons.collections.version>
