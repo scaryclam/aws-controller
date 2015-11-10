@@ -1,4 +1,4 @@
-package uk.co.bluesuntech.autoscaling;
+package uk.co.bluesunlabs.autoscaling;
 
 import java.util.ArrayList;
 import java.util.Collection;

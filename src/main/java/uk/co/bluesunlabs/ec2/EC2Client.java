@@ -1,4 +1,4 @@
-package uk.co.bluesuntech.ec2;
+package uk.co.bluesunlabs.ec2;
 
 import java.util.ArrayList;
 import java.util.Collection;

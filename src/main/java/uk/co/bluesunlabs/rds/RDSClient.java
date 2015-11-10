@@ -1,4 +1,4 @@
-package uk.co.bluesuntech.rds;
+package uk.co.bluesunlabs.rds;
 
 import java.util.ArrayList;
 import java.util.List;

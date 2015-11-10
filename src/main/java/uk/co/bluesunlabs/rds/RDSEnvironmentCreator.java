@@ -1,4 +1,4 @@
-package uk.co.bluesuntech.rds;
+package uk.co.bluesunlabs.rds;
 
 
 import com.amazonaws.util.json.JSONArray;

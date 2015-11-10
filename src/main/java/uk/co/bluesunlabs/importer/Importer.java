@@ -1,4 +1,4 @@
-package uk.co.bluesuntech.importer;
+package uk.co.bluesunlabs.importer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,10 +8,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import uk.co.bluesuntech.delta.AutoscaleDelta;
-import uk.co.bluesuntech.delta.EC2InstanceDelta;
-import uk.co.bluesuntech.delta.EC2SecurityGroupDelta;
-import uk.co.bluesuntech.delta.RDSInstanceDelta;
+import uk.co.bluesunlabs.delta.AutoscaleDelta;
+import uk.co.bluesunlabs.delta.EC2InstanceDelta;
+import uk.co.bluesunlabs.delta.EC2SecurityGroupDelta;
+import uk.co.bluesunlabs.delta.RDSInstanceDelta;
 
 import com.amazonaws.util.json.JSONArray;
 import com.amazonaws.util.json.JSONException;

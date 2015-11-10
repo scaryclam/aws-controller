@@ -1,4 +1,4 @@
-package uk.co.bluesuntech.application;
+package uk.co.bluesunlabs.application;
 
 import java.awt.List;
 import java.io.BufferedReader;
@@ -22,16 +22,16 @@ import com.amazonaws.services.elasticloadbalancing.model.Listener;
 import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
 
-import uk.co.bluesuntech.config.OptionFactory;
-import uk.co.bluesuntech.delta.DeltaApplier;
-import uk.co.bluesuntech.ec2.EC2Client;
-import uk.co.bluesuntech.ec2.EC2EnvironmentCreator;
-import uk.co.bluesuntech.elasticloadbalancer.ELBEnvironmentCreator;
-import uk.co.bluesuntech.elasticloadbalancer.LoadBalancerClient;
-import uk.co.bluesuntech.export.Exporter;
-import uk.co.bluesuntech.importer.Importer;
-import uk.co.bluesuntech.rds.RDSClient;
-import uk.co.bluesuntech.rds.RDSEnvironmentCreator;
+import uk.co.bluesunlabs.config.OptionFactory;
+import uk.co.bluesunlabs.delta.DeltaApplier;
+import uk.co.bluesunlabs.ec2.EC2Client;
+import uk.co.bluesunlabs.ec2.EC2EnvironmentCreator;
+import uk.co.bluesunlabs.elasticloadbalancer.ELBEnvironmentCreator;
+import uk.co.bluesunlabs.elasticloadbalancer.LoadBalancerClient;
+import uk.co.bluesunlabs.export.Exporter;
+import uk.co.bluesunlabs.importer.Importer;
+import uk.co.bluesunlabs.rds.RDSClient;
+import uk.co.bluesunlabs.rds.RDSEnvironmentCreator;
 
 
 public class Application {
@@ -40,7 +40,7 @@ public class Application {
 	private CommandLine setup;
 	private static Options options;
 	
-	public Application (CommandLine line) {
+	public Application(CommandLine line) {
 		setup = line;
 	}
 	
@@ -144,35 +144,43 @@ public class Application {
             System.exit(0);
         }
 		
+		String configPath = setup.getOptionValue("config");
+		if (setup.hasOption("template")) {
+			String templateName = setup.getOptionValue("template");
+			ConfigReader configReader = new ConfigReader(configPath, templateName);
+		} else {
+			ConfigReader configReader = new ConfigReader(configPath);
+		}
+		
 		// We always need to export the current config somewhere, whether it's to screen or
         // to file, so go get the current landscape.
         //Exporter exporter = new Exporter();
         //JSONObject currentConfig = exporter.exportExploration();
 		
-		switch(mode) {
-		   case "create":
-		       try {
-		           executeCreation(environment);
-		           break;
-		       } catch (Exception error) {
-		           HelpFormatter formatter = new HelpFormatter();
-		           formatter.printHelp("java -jar aws-controller.jar", options);
-		           System.exit(0);
-		       }
-		   case "teardown":
-		       executeTearDown();
-               break;
-		   case "delta":
-		       executeDelta();
-               break;
-		   case "explore":
-		       executeExplore(environment);
-		       break;
-		   default:
-		       HelpFormatter formatter = new HelpFormatter();
-	           formatter.printHelp("java -jar aws-controller.jar", options);
-	           System.exit(0);
-		}
+//		switch(mode) {
+//		   case "create":
+//		       try {
+//		           executeCreation(environment);
+//		           break;
+//		       } catch (Exception error) {
+//		           HelpFormatter formatter = new HelpFormatter();
+//		           formatter.printHelp("java -jar aws-controller.jar", options);
+//		           System.exit(0);
+//		       }
+//		   case "teardown":
+//		       executeTearDown();
+//               break;
+//		   case "delta":
+//		       executeDelta();
+//               break;
+//		   case "explore":
+//		       executeExplore(environment);
+//		       break;
+//		   default:
+//		       HelpFormatter formatter = new HelpFormatter();
+//	           formatter.printHelp("java -jar aws-controller.jar", options);
+//	           System.exit(0);
+//		}
 		
 //		JSONObject delta = new JSONObject();
 //		JSONObject newFullConfig = null;

@@ -1,4 +1,4 @@
-package uk.co.bluesuntech.delta;
+package uk.co.bluesunlabs.delta;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,4 +1,4 @@
-package uk.co.bluesuntech.delta;
+package uk.co.bluesunlabs.delta;
 
 import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;

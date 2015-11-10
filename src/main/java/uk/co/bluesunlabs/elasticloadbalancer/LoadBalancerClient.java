@@ -1,4 +1,4 @@
-package uk.co.bluesuntech.elasticloadbalancer;
+package uk.co.bluesunlabs.elasticloadbalancer;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -1,4 +1,4 @@
-package uk.co.bluesuntech.delta;
+package uk.co.bluesunlabs.delta;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -7,9 +7,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import uk.co.bluesuntech.autoscaling.AutoscaleClient;
-import uk.co.bluesuntech.ec2.EC2Client;
-import uk.co.bluesuntech.rds.RDSClient;
+import uk.co.bluesunlabs.autoscaling.AutoscaleClient;
+import uk.co.bluesunlabs.ec2.EC2Client;
+import uk.co.bluesunlabs.rds.RDSClient;
 
 import com.amazonaws.services.ec2.model.SecurityGroup;
 import com.amazonaws.util.json.JSONArray;

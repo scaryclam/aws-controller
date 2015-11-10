@@ -1,4 +1,4 @@
-package uk.co.bluesuntech.export;
+package uk.co.bluesunlabs.export;
 
 import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
@@ -12,10 +12,10 @@ import java.util.List;
 import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
 
-import uk.co.bluesuntech.autoscaling.AutoscaleClient;
-import uk.co.bluesuntech.ec2.EC2Client;
-import uk.co.bluesuntech.elasticloadbalancer.LoadBalancerClient;
-import uk.co.bluesuntech.rds.RDSClient;
+import uk.co.bluesunlabs.autoscaling.AutoscaleClient;
+import uk.co.bluesunlabs.ec2.EC2Client;
+import uk.co.bluesunlabs.elasticloadbalancer.LoadBalancerClient;
+import uk.co.bluesunlabs.rds.RDSClient;
 
 
 public class Exporter {
