@@ -16,6 +16,8 @@ import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
 
 public class ConfigReader {
+	private JSONObject template;
+	
 	public ConfigReader(String configFileLocation) throws IOException, JSONException {
 		Path path = Paths.get(configFileLocation);
 		String content = new String(Files.readAllBytes(path));
@@ -43,8 +45,22 @@ public class ConfigReader {
 		JSONObject template = completeConfig.getJSONObject("template");
 		
 		JSONObject parsedConfig = createTemplate(template, namedTemplateConfig);
+		setTemplate(parsedConfig);
 	}
 	
+	public JSONObject getEC2Config(JSONObject config) throws JSONException {
+		JSONObject ec2Config = config.getJSONObject("ec2");
+		return ec2Config;
+	}
+	
+	public JSONObject getTemplate() {
+		return template;
+	}
+
+	public void setTemplate(JSONObject template) {
+		this.template = template;
+	}
+
 	private JSONObject createTemplate(JSONObject template, JSONObject context) throws JSONException {
 		String templateString = template.toString();
 		VelocityEngine engine = new VelocityEngine();

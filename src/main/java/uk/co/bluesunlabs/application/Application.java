@@ -44,100 +44,23 @@ public class Application {
 		setup = line;
 	}
 	
-	private void executeCreation(String environment) throws JSONException, IOException {
-	    // Creation mode
-	    Exporter exporter = new Exporter();
-        JSONObject currentConfig = exporter.exportExploration();
-        boolean hasOutput = setup.hasOption('o');
-        boolean hasInput = setup.hasOption('i');
-        
-        if (!hasInput) {
-            System.out.println("ERROR: you must provide an input file");
-        }
-        
-        Importer importer = new Importer();
-        String inputFile = setup.getOptionValue('i');
-        System.out.println("Input file set, attempting to load configuration");
-        JSONObject newFullConfig = importer.readConfigFromFile(inputFile);
-        JSONObject fullConfig = newFullConfig.getJSONObject(environment); 
-        
-        // Create the things!
-        // EC2
-        EC2EnvironmentCreator ec2Creator = new EC2EnvironmentCreator();
-        ec2Creator.createEnvFromConfig(fullConfig.getJSONObject("ec2"));
-        
-        // ELB
-        ELBEnvironmentCreator elbCreator = new ELBEnvironmentCreator();
-        elbCreator.createEnvFromConfig(fullConfig.getJSONObject("elb"));
-        
-        // RDS
-        RDSEnvironmentCreator rdsCreator = new RDSEnvironmentCreator();
-        rdsCreator.createEnvFromConfig(fullConfig.getJSONObject("rds"));
-        
-        
-        // Write the new configuration out
-        if (hasOutput) {
-            System.out.println("Output option set. Attempting to write configuration");
-            String outputFile = setup.getOptionValue('o');
-            // Re-scan the infrastructure
-            currentConfig = exporter.exportExploration();
-            exporter.writeConfig(outputFile, fullConfig, currentConfig, environment);
-        }
-	}
-	
-	private void executeTearDown() {
-        // Tear down mode
-    }
-	
-	private void executeDelta() {
-        // Delta mode
-    }
-	
-	private void executeExplore(String environment) throws JSONException, IOException {
-	    // Exploratory mode
-	    Exporter exporter = new Exporter();
-        JSONObject currentConfig = exporter.exportExploration();
-        JSONObject newFullConfig = null;
-        boolean hasOutput = setup.hasOption('o');
-        boolean hasInput = setup.hasOption('i');
-        
-        System.out.println("Current configuration:");
-        System.out.println(currentConfig.toString(4));
-        
-        if (hasInput) {
-            Importer importer = new Importer();
-            String inputFile = setup.getOptionValue('i');
-            System.out.println("Input file set, attempting to load configuration");
-            newFullConfig = importer.readConfigFromFile(inputFile);
-        }
-        
-        if (hasOutput) {
-            System.out.println("Output option set. Attempting to write configuration");
-            String outputFile = setup.getOptionValue('o');
-            if (newFullConfig == null) {
-                newFullConfig = exporter.createEmptyConfig();
-            }
-            exporter.writeConfig(outputFile, newFullConfig, currentConfig, environment);
-        }
-	}
-	
 	private void execute() throws IOException, JSONException {
 	    /* TODO: change the application to allow the following modes:
 	     *  - Creating an environment
 	     *  - Tearing down an environment
-	     *  - Applying a delta of an existing environment
 	     */
+		ConfigReader configReader;
 	    String environment = setup.getOptionValue('e', "default");
 		boolean help = setup.hasOption('h');
-		//boolean noInput = setup.hasOption('y');
-		//boolean showDiff = setup.hasOption('d');
-		//boolean dryRun = setup.hasOption("dry-run") || setup.hasOption('D');
-		
-		//boolean hasInput = setup.hasOption('i');
-		//boolean hasOutput = setup.hasOption('o');
-		
+
+		if (!setup.hasOption("mode")) {
+			HelpFormatter formatter = new HelpFormatter();
+			System.out.println("You must provide a mode!");
+            formatter.printHelp("java -jar aws-controller.jar", options);
+            System.exit(0);
+		}
 		String mode = setup.getOptionValue("mode");
-		
+
 		if (help) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("java -jar aws-controller.jar", options);
@@ -147,103 +70,32 @@ public class Application {
 		String configPath = setup.getOptionValue("config");
 		if (setup.hasOption("template")) {
 			String templateName = setup.getOptionValue("template");
-			ConfigReader configReader = new ConfigReader(configPath, templateName);
+			configReader = new ConfigReader(configPath, templateName);
 		} else {
-			ConfigReader configReader = new ConfigReader(configPath);
+			configReader = new ConfigReader(configPath);
 		}
 		
-		// We always need to export the current config somewhere, whether it's to screen or
-        // to file, so go get the current landscape.
-        //Exporter exporter = new Exporter();
-        //JSONObject currentConfig = exporter.exportExploration();
+		JSONObject ec2Config = configReader.getEC2Config(configReader.getTemplate());
+		EC2EnvironmentCreator ec2Creator = new EC2EnvironmentCreator();
 		
-//		switch(mode) {
-//		   case "create":
-//		       try {
-//		           executeCreation(environment);
-//		           break;
-//		       } catch (Exception error) {
-//		           HelpFormatter formatter = new HelpFormatter();
-//		           formatter.printHelp("java -jar aws-controller.jar", options);
-//		           System.exit(0);
-//		       }
-//		   case "teardown":
-//		       executeTearDown();
-//               break;
-//		   case "delta":
-//		       executeDelta();
-//               break;
-//		   case "explore":
-//		       executeExplore(environment);
-//		       break;
-//		   default:
-//		       HelpFormatter formatter = new HelpFormatter();
-//	           formatter.printHelp("java -jar aws-controller.jar", options);
-//	           System.exit(0);
-//		}
-		
-//		JSONObject delta = new JSONObject();
-//		JSONObject newFullConfig = null;
-//		
-//		if (hasInput) {
-//		    Importer importer = new Importer();
-//			String inputFile = setup.getOptionValue('i');
-//			System.out.println("Input file set, attempting to load configuration");
-//			newFullConfig = importer.readConfigFromFile(inputFile);
-//			JSONObject newConfig = importer.getEnvironmentConfig(newFullConfig, environment);
-//			delta = importer.createDelta(newConfig, currentConfig);
-//		}
-//		
-//		JSONObject changedConfig = currentConfig;
-//		
-//		if (showDiff) {
-//			// Tell user what changes will be made
-//			System.out.println("Changes to be made:");
-//			System.out.println(delta.toString(4));
-//		}
-//		
-//		if (hasOutput) {
-//			System.out.println("Output option set. Attempting to write configuration");
-//			String outputFile = setup.getOptionValue('o');
-//			if (newFullConfig == null) {
-//			    newFullConfig = exporter.createEmptyConfig();
-//			}
-//			exporter.writeConfig(outputFile, newFullConfig, changedConfig, environment);
-//		}
-//		
-//		if (!dryRun) {
-//			Boolean applyChanges = false;
-//			if (noInput) {
-//				applyChanges = true;
-//			} else {
-//				System.out.println("Would you like to apply the changes? [N/y]");
-//				BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-//			    String input = reader.readLine();
-//				if (input.toLowerCase().equals("y")) {
-//					applyChanges = true;
-//				}
-//			}
-//			if (applyChanges) {
-//			    // Apply Changes
-//			    DeltaApplier applier = new DeltaApplier();
-//			    applier.applyDelta(delta);
-//			} else {
-//				System.out.println("No changes have been applied");
-//			}
-//		}
-
-		//LoadBalancerClient lbClient = new LoadBalancerClient();
-		
-		//Collection<String> availabilityZones = new ArrayList<String>();
-		//availabilityZones.add("eu-west-1a");
-		//availabilityZones.add("eu-west-1b");
-		//availabilityZones.add("eu-west-1c");
-		
-		//Collection<Listener> listeners = new ArrayList<Listener>();
-		//Listener listener = lbClient.createListener("http", 80, 80);
-		//listeners.add(listener);
-		//lbClient.createLoadBalancer("test-balancer-2", groups, listeners, availabilityZones);
-		
+		switch(mode) {
+		   case "create":
+		       try {
+		    	   ec2Creator.createEnvFromConfig(ec2Config);
+		           break;
+		       } catch (Exception error) {
+		           HelpFormatter formatter = new HelpFormatter();
+		           formatter.printHelp("java -jar aws-controller.jar", options);
+		           System.exit(0);
+		       }
+		   case "teardown":
+		       ec2Creator.tearDownEnvFromConfig(ec2Config);
+               break;
+		   default:
+		       HelpFormatter formatter = new HelpFormatter();
+	           formatter.printHelp("java -jar aws-controller.jar", options);
+	           System.exit(0);
+		}		
 		System.out.println("Finished");
 	}
 	

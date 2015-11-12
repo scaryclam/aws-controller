@@ -22,10 +22,24 @@ public class EC2EnvironmentCreator {
     }
     
     public void createEnvFromConfig(JSONObject config) throws JSONException {
-        createSecurityGroups(config);
-        // Instances will need the security new group IDs
-        updateInstanceSecurityGroups(config);
+    	if (config.has("securityGroups")) {
+    		createSecurityGroups(config);
+    		// Instances will need the security new group IDs
+    		updateInstanceSecurityGroups(config);
+    	}
         createInstances(config);
+    }
+    
+    public void tearDownEnvFromConfig(JSONObject config) throws JSONException {
+    	destroyInstances(config);
+    }
+    
+    private void destroyInstances(JSONObject config) throws JSONException {
+    	JSONArray instances = config.getJSONArray("instances");
+        for (int index = 0; index < instances.length(); index++) {
+            JSONObject instance = instances.getJSONObject(index);
+            ec2Client.terminateInstance(instance.getString("instanceId"));
+        }
     }
     
     private void updateInstanceSecurityGroups(JSONObject config) throws JSONException {
