@@ -17,7 +17,7 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
 import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.autoscaling.model.Filter;
+import com.amazonaws.services.ec2.model.Filter;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupEgressRequest;
@@ -174,6 +174,23 @@ public class EC2Client {
 		}
 		return result;
 	}
+	
+	public Instance findInstanceByControllerId(String controllerId) {
+		DescribeInstancesRequest request = new DescribeInstancesRequest();
+		Filter tagFilter = new Filter("tag:controllerId").withValues(controllerId);
+		DescribeInstancesResult result = ec2Client.describeInstances(
+				request.withFilters(tagFilter));
+		List<Reservation> reservations = result.getReservations();
+		if (reservations.size() > 1 || reservations.size() < 1) {
+			return null;
+		}
+		Reservation reservation = reservations.get(0);
+		List<Instance> instances = reservation.getInstances();
+		if (instances.size() > 1 || instances.size() < 1) {
+			return null;
+		}
+		return instances.get(0);
+    }
 	
 	public void stopInstance(String instanceId) {
 		List<String> instanceIds = new ArrayList<String>();

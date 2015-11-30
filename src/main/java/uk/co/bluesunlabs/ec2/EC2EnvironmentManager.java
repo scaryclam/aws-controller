@@ -6,18 +6,19 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.util.json.JSONArray;
 import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
 
-public class EC2EnvironmentCreator {
+public class EC2EnvironmentManager {
     EC2Client ec2Client;
     
-    public EC2EnvironmentCreator() {
+    public EC2EnvironmentManager() {
         ec2Client = new EC2Client();
     }
     
-    public EC2EnvironmentCreator(EC2Client inputEC2Client) {
+    public EC2EnvironmentManager(EC2Client inputEC2Client) {
         ec2Client = inputEC2Client;
     }
     
@@ -38,7 +39,13 @@ public class EC2EnvironmentCreator {
     	JSONArray instances = config.getJSONArray("instances");
         for (int index = 0; index < instances.length(); index++) {
             JSONObject instance = instances.getJSONObject(index);
-            ec2Client.terminateInstance(instance.getString("instanceId"));
+            if (instance.has("instanceId")) {
+           		ec2Client.terminateInstance(instance.getString("instanceId"));
+            } else {
+            	Instance instanceObj = ec2Client.findInstanceByControllerId(
+           			instance.getJSONObject("tags").getString("controllerId"));
+            	ec2Client.terminateInstance(instanceObj.getInstanceId());
+            }
         }
     }
     

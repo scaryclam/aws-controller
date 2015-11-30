@@ -25,13 +25,13 @@ import com.amazonaws.util.json.JSONObject;
 import uk.co.bluesunlabs.config.OptionFactory;
 import uk.co.bluesunlabs.delta.DeltaApplier;
 import uk.co.bluesunlabs.ec2.EC2Client;
-import uk.co.bluesunlabs.ec2.EC2EnvironmentCreator;
+import uk.co.bluesunlabs.ec2.EC2EnvironmentManager;
 import uk.co.bluesunlabs.elasticloadbalancer.ELBEnvironmentCreator;
 import uk.co.bluesunlabs.elasticloadbalancer.LoadBalancerClient;
 import uk.co.bluesunlabs.export.Exporter;
 import uk.co.bluesunlabs.importer.Importer;
 import uk.co.bluesunlabs.rds.RDSClient;
-import uk.co.bluesunlabs.rds.RDSEnvironmentCreator;
+import uk.co.bluesunlabs.rds.RDSEnvironmentManager;
 
 
 public class Application {
@@ -75,21 +75,44 @@ public class Application {
 			configReader = new ConfigReader(configPath);
 		}
 		
-		JSONObject ec2Config = configReader.getEC2Config(configReader.getTemplate());
-		EC2EnvironmentCreator ec2Creator = new EC2EnvironmentCreator();
+		JSONObject template = configReader.getTemplate();
+		JSONObject ec2Config = null;
+		JSONObject rdsConfig = null;
+		
+		try {
+		    ec2Config = configReader.getEC2Config(template);
+		} catch (JSONException error) {
+			ec2Config = null;
+		}
+		
+		try {
+			rdsConfig = configReader.getRDSConfig(template);
+		} catch (JSONException error) {
+			rdsConfig = null;
+		}
+		
+		EC2EnvironmentManager ec2Manager = new EC2EnvironmentManager();
+		RDSEnvironmentManager rdsManager = new RDSEnvironmentManager();
 		
 		switch(mode) {
 		   case "create":
 		       try {
-		    	   ec2Creator.createEnvFromConfig(ec2Config);
+		    	   if (ec2Config != null) {
+		    		   ec2Manager.createEnvFromConfig(ec2Config);
+		    	   }
+		    	   if (rdsConfig != null) {
+		    		   rdsManager.createEnvFromConfig(rdsConfig);
+		    	   }
 		           break;
 		       } catch (Exception error) {
+		    	   System.out.println(error);
 		           HelpFormatter formatter = new HelpFormatter();
 		           formatter.printHelp("java -jar aws-controller.jar", options);
 		           System.exit(0);
 		       }
 		   case "teardown":
-		       ec2Creator.tearDownEnvFromConfig(ec2Config);
+		       ec2Manager.tearDownEnvFromConfig(ec2Config);
+		       rdsManager.tearDownEnvFromConfig(rdsConfig);
                break;
 		   default:
 		       HelpFormatter formatter = new HelpFormatter();

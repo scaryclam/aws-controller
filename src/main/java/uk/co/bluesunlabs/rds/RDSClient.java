@@ -38,6 +38,19 @@ public class RDSClient {
 		System.out.println("Created Database Instance");
 	}
 	
+	public void createDBInstance(String dbName, String engine, String masterUsername, String masterUserPassword, String dBInstanceClass, Integer allocatedStorage) {
+		CreateDBInstanceRequest request = new CreateDBInstanceRequest();
+		request.setDBName(dbName);
+		request.setEngine(engine);
+		request.setMasterUsername(masterUsername);
+		request.setMasterUserPassword(masterUserPassword);
+		request.setDBInstanceClass(dBInstanceClass);
+		request.setAllocatedStorage(allocatedStorage);
+		System.out.println("Creating Database Instance");
+		rdsClient.createDBInstance(request);
+		System.out.println("Created Database Instance");
+	}
+	
 	public void terminateDBInstance(String dBInstanceIdentifier, Boolean skipFinalSnapshot) {
 		DeleteDBInstanceRequest request = new DeleteDBInstanceRequest(dBInstanceIdentifier);
 		request.setSkipFinalSnapshot(skipFinalSnapshot);

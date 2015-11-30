@@ -36,6 +36,7 @@ public class ConfigReader {
 	public ConfigReader(String configFileLocation, String templateName) throws IOException, JSONException {
 		Path path = Paths.get(configFileLocation);
 		String content = new String(Files.readAllBytes(path));
+		System.out.println(content);
 		JSONObject completeConfig = new JSONObject(content);
 		JSONObject topConfig = completeConfig.getJSONObject("top");
 		JSONObject templateConfigs = completeConfig.getJSONObject("templateConfigs");
@@ -51,6 +52,11 @@ public class ConfigReader {
 	public JSONObject getEC2Config(JSONObject config) throws JSONException {
 		JSONObject ec2Config = config.getJSONObject("ec2");
 		return ec2Config;
+	}
+	
+	public JSONObject getRDSConfig(JSONObject config) throws JSONException {
+		JSONObject rdsConfig = config.getJSONObject("rds");
+		return rdsConfig;
 	}
 	
 	public JSONObject getTemplate() {
