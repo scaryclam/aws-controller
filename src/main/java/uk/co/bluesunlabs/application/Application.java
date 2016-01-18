@@ -101,7 +101,7 @@ public class Application {
 		    		   ec2Manager.createEnvFromConfig(ec2Config);
 		    	   }
 		    	   if (rdsConfig != null) {
-		    		   rdsManager.createEnvFromConfig(rdsConfig);
+		    		   //rdsManager.createEnvFromConfig(rdsConfig);
 		    	   }
 		           break;
 		       } catch (Exception error) {
@@ -112,7 +112,7 @@ public class Application {
 		       }
 		   case "teardown":
 		       ec2Manager.tearDownEnvFromConfig(ec2Config);
-		       rdsManager.tearDownEnvFromConfig(rdsConfig);
+//		       rdsManager.tearDownEnvFromConfig(rdsConfig);
                break;
 		   default:
 		       HelpFormatter formatter = new HelpFormatter();

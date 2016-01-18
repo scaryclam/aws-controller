@@ -38,7 +38,6 @@ public class RDSEnvironmentManager {
             try {
             	allocatedStorage = instance.getInt("allocatedStorage");
             } catch (JSONException error) {
-            	String foo = instance.getString("allocatedStorage");
             	allocatedStorage = Integer.parseInt(instance.getString("allocatedStorage"));
             }
             

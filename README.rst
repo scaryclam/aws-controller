@@ -9,3 +9,11 @@ The project has a similar goal to Terraform from HashiCorp
 (https://www.terraform.io/) which I would highly recommend if you are looking
 for a more stable and feature rich system. This project is more aimed at
 lightweight AWS configuration and management.
+
+Basic Usage
+-----------
+
+To use the controller, run:
+
+  java -jar aws-controller --config <path to config file> --template <template name> --mode <create|teardown>
+

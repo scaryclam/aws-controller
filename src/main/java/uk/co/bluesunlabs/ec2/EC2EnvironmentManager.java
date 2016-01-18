@@ -6,7 +6,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.services.ec2.model.DescribeSecurityGroupsRequest;
 import com.amazonaws.services.ec2.model.Instance;
+import com.amazonaws.services.ec2.model.SecurityGroup;
 import com.amazonaws.util.json.JSONArray;
 import com.amazonaws.util.json.JSONException;
 import com.amazonaws.util.json.JSONObject;
@@ -23,16 +26,44 @@ public class EC2EnvironmentManager {
     }
     
     public void createEnvFromConfig(JSONObject config) throws JSONException {
-    	if (config.has("securityGroups")) {
-    		createSecurityGroups(config);
-    		// Instances will need the security new group IDs
-    		updateInstanceSecurityGroups(config);
-    	}
+    	addKeyPairs(config);
+    	addSecurityGroups(config);
         createInstances(config);
     }
     
     public void tearDownEnvFromConfig(JSONObject config) throws JSONException {
     	destroyInstances(config);
+    	destroyKeyPairs(config);
+    	destroySecurityGroups(config);
+    }
+    
+    private void addKeyPairs(JSONObject config) throws JSONException {
+    	if (config.has("keyPairs")) {
+    		JSONArray keyPairNames = config.getJSONArray("keyPairs");
+			for (int index = 0; index < keyPairNames.length(); index++) {
+	            JSONObject keyPair = keyPairNames.getJSONObject(index);
+    			try {
+    	    		ec2Client.getKeyPair(keyPair.getString("name"));
+    	    	} catch (AmazonServiceException error) {
+    	    		ec2Client.createKeyPair(keyPair.getString("name"));
+    	    	}
+    		}
+    	}
+    }
+    
+    private void destroyKeyPairs(JSONObject config) throws JSONException {
+    	if (config.has("keyPairs")) {
+    		JSONArray keyPairNames = config.getJSONArray("keyPairs");
+			for (int index = 0; index < keyPairNames.length(); index++) {
+	            JSONObject keyPair = keyPairNames.getJSONObject(index);
+    			try {
+    	    		ec2Client.getKeyPair(keyPair.getString("name"));
+    	    		ec2Client.destroyKeyPair(keyPair.getString("name"));
+    	    	} catch (AmazonServiceException error) {
+    	    		// Ignore the error, the keyPair doesn't exist
+    	    	}
+			}
+    	}
     }
     
     private void destroyInstances(JSONObject config) throws JSONException {
@@ -47,6 +78,29 @@ public class EC2EnvironmentManager {
             	ec2Client.terminateInstance(instanceObj.getInstanceId());
             }
         }
+    }
+    
+    private void destroySecurityGroups(JSONObject config) throws JSONException {
+    	if (config.has("securityGroups")) {
+    		JSONArray securityGroups = config.getJSONArray("securityGroups");
+            for (int index = 0; index < securityGroups.length(); index++) {
+                JSONObject securityGroup = securityGroups.getJSONObject(index);                
+                // Check that this group exists
+                try {
+                	SecurityGroup group = ec2Client.getSecurityGroup(securityGroup.getString("groupName"));
+                	String securityGroupId = group.getGroupId();
+                	
+                	JSONArray ingressRules = securityGroup.getJSONArray("permissionsIngress");
+                    JSONArray egressRules = securityGroup.getJSONArray("permissionsEgress");
+                    
+                	destroyEgressPermissions(egressRules, securityGroupId);
+                	destroyIngressPermissions(ingressRules, securityGroupId);
+                	ec2Client.deleteSecurityGroup(securityGroupId);
+                } catch (AmazonServiceException error) {
+                	// The group didn't exist, so we don't have to do anything
+                }
+            }
+    	}
     }
     
     private void updateInstanceSecurityGroups(JSONObject config) throws JSONException {
@@ -86,7 +140,8 @@ public class EC2EnvironmentManager {
             List<String> sgNames = new ArrayList<String>();
             for (int i = 0; i < securityGroups.length(); i++) {
                 JSONObject sg = securityGroups.getJSONObject(i); 
-                sgNames.add(sg.getString("groupId"));
+                SecurityGroup group = ec2Client.getSecurityGroup(sg.getString("groupName"));
+                sgNames.add(group.getGroupId());
             }
             Map<String, String> tags = new HashMap<String, String>();
             JSONObject instanceTags = instance.getJSONObject("tags");
@@ -99,63 +154,106 @@ public class EC2EnvironmentManager {
         }
     }
     
+    private void addSecurityGroups(JSONObject config) throws JSONException {
+    	if (config.has("securityGroups")) {
+    		createSecurityGroups(config);
+    	}
+    }
+    
     private void createSecurityGroups(JSONObject config) throws JSONException {
         JSONArray securityGroups = config.getJSONArray("securityGroups");
-//        "groupId": "sg-983f28fd",
-//        "groupName": "launch-wizard-1",
-//        "permissions": [{
-//        "fromPort": 22,
-//        "ipProtocol": "tcp",
-//        "ipRanges": ["0.0.0.0/0"],
-//        "prefixListIds": [],
-//        "toPort": 22,
-//         "userIdGroupPairs": []
         for (int index = 0; index < securityGroups.length(); index++) {
             JSONObject securityGroup = securityGroups.getJSONObject(index);
-            String sgId = ec2Client.createSecurityGroup(securityGroup.getString("groupName"), securityGroup.getString("groupDescription"));
+            String sgId;
+            
+            // See if this group already exists first
+            try {
+            	SecurityGroup group = ec2Client.getSecurityGroup(securityGroup.getString("groupName"));
+            	sgId = group.getGroupId();
+            } catch (AmazonServiceException error) {
+            	sgId = ec2Client.createSecurityGroup(
+            		securityGroup.getString("groupName"), 
+            		securityGroup.getString("groupDescription"));
+            }
             securityGroup.put("groupId", sgId);
             
             // Add the rules
-            JSONArray ingressRules = securityGroup.getJSONArray("permissions");
+            JSONArray ingressRules = securityGroup.getJSONArray("permissionsIngress");
             JSONArray egressRules = securityGroup.getJSONArray("permissionsEgress");
             
-            for (int ruleIndex = 0; ruleIndex < ingressRules.length(); ruleIndex++) {
-                JSONObject rule = ingressRules.getJSONObject(ruleIndex);
-                JSONArray ranges = rule.getJSONArray("ipRanges");
-                List<String> ipRanges = new ArrayList<String>();
-                for (int i = 0; i < ranges.length(); i++) {
-                    ipRanges.add(ranges.getString(i));
-                }
-                String protocol = rule.getString("ipProtocol");
-                Integer startPort = rule.getInt("fromPort");
-                Integer endPort = rule.getInt("toPort");
-                ec2Client.addInboundSecurityGroupIpPermission(sgId, ipRanges, protocol, startPort, endPort);
+            addIngressPermissions(ingressRules, sgId);
+            addEgressPermissions(egressRules, sgId);
+        }            
+    }
+    
+    private void addEgressPermissions(JSONArray egressRules, String sgId) throws JSONException {
+    	for (int ruleIndex = 0; ruleIndex < egressRules.length(); ruleIndex++) {
+            JSONObject rule = egressRules.getJSONObject(ruleIndex);
+            JSONArray ranges = rule.getJSONArray("ipRanges");
+            Integer startPort = 0;
+            Integer endPort = 0;
+            List<String> ipRanges = new ArrayList<String>();
+            for (int i = 0; i < ranges.length(); i++) {
+                ipRanges.add(ranges.getString(i));
+            }
+            String protocol = rule.getString("ipProtocol");
+            try {
+                startPort = rule.getInt("fromPort");
+            } catch (JSONException error) {
+                ec2Client.addOutboundSecurityGroupIpPermission(sgId, ipRanges, protocol);
+            }
+            try {
+                endPort = rule.getInt("toPort");
+            } catch (JSONException error) {
+                ec2Client.addOutboundSecurityGroupIpPermission(sgId, ipRanges, protocol);
             }
             
-            for (int ruleIndex = 0; ruleIndex < egressRules.length(); ruleIndex++) {
-                JSONObject rule = egressRules.getJSONObject(ruleIndex);
-                JSONArray ranges = rule.getJSONArray("ipRanges");
-                Integer startPort = 0;
-                Integer endPort = 0;
-                List<String> ipRanges = new ArrayList<String>();
-                for (int i = 0; i < ranges.length(); i++) {
-                    ipRanges.add(ranges.getString(i));
-                }
-                String protocol = rule.getString("ipProtocol");
-                try {
-                    startPort = rule.getInt("fromPort");
-                } catch (JSONException error) {
-                    ec2Client.addOutboundSecurityGroupIpPermission(sgId, ipRanges, protocol);
-                }
-                try {
-                    endPort = rule.getInt("toPort");
-                } catch (JSONException error) {
-                    ec2Client.addOutboundSecurityGroupIpPermission(sgId, ipRanges, protocol);
-                }
-                
-                ec2Client.addOutboundSecurityGroupIpPermission(sgId, ipRanges, protocol, startPort, endPort);
-            }
+            ec2Client.addOutboundSecurityGroupIpPermission(sgId, ipRanges, protocol, startPort, endPort);
         }
-                    
+    }
+    
+    private void addIngressPermissions(JSONArray ingressRules, String sgId) throws JSONException {
+    	for (int ruleIndex = 0; ruleIndex < ingressRules.length(); ruleIndex++) {
+            JSONObject rule = ingressRules.getJSONObject(ruleIndex);
+            JSONArray ranges = rule.getJSONArray("ipRanges");
+            List<String> ipRanges = new ArrayList<String>();
+            for (int i = 0; i < ranges.length(); i++) {
+                ipRanges.add(ranges.getString(i));
+            }
+            String protocol = rule.getString("ipProtocol");
+            Integer startPort = rule.getInt("fromPort");
+            Integer endPort = rule.getInt("toPort");
+            ec2Client.addInboundSecurityGroupIpPermission(sgId, ipRanges, protocol, startPort, endPort);
+        }
+    }
+    
+    private void destroyEgressPermissions(JSONArray egressRules, String sgId) throws JSONException {
+    	for (int ruleIndex = 0; ruleIndex < egressRules.length(); ruleIndex++) {
+            JSONObject rule = egressRules.getJSONObject(ruleIndex);
+            JSONArray ranges = rule.getJSONArray("ipRanges");
+            List<String> ipRanges = new ArrayList<String>();
+            for (int i = 0; i < ranges.length(); i++) {
+                ipRanges.add(ranges.getString(i));
+            }
+            String protocol = rule.getString("ipProtocol");
+            Integer startPort = rule.getInt("fromPort");
+            Integer endPort = rule.getInt("toPort");
+            ec2Client.removeOutboundSecurityGroupIpPermission(sgId, ipRanges, protocol, startPort, endPort);
+    	}
+    }
+    
+    private void destroyIngressPermissions(JSONArray ingressRules, String sgId) throws JSONException {
+    	for (int ruleIndex = 0; ruleIndex < ingressRules.length(); ruleIndex++) {
+            JSONObject rule = ingressRules.getJSONObject(ruleIndex);
+            JSONArray ranges = rule.getJSONArray("ipRanges");
+            List<String> ipRanges = new ArrayList<String>();
+            for (int i = 0; i < ranges.length(); i++) {
+                ipRanges.add(ranges.getString(i));
+            }
+            String protocol = rule.getString("ipProtocol");
+            Integer startPort = rule.getInt("fromPort");
+            Integer endPort = rule.getInt("toPort");
+            ec2Client.removeInboundSecurityGroupIpPermission(sgId, ipRanges, protocol, startPort, endPort);
+    	}
     }
 }

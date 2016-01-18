@@ -22,19 +22,30 @@ import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2Client;
 import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupEgressRequest;
 import com.amazonaws.services.ec2.model.AuthorizeSecurityGroupIngressRequest;
+import com.amazonaws.services.ec2.model.CreateKeyPairRequest;
+import com.amazonaws.services.ec2.model.CreateKeyPairResult;
 import com.amazonaws.services.ec2.model.CreateSecurityGroupRequest;
 import com.amazonaws.services.ec2.model.CreateSecurityGroupResult;
 import com.amazonaws.services.ec2.model.CreateTagsRequest;
+import com.amazonaws.services.ec2.model.DeleteKeyPairRequest;
 import com.amazonaws.services.ec2.model.DeleteSecurityGroupRequest;
 import com.amazonaws.services.ec2.model.DescribeInstanceAttributeRequest;
 import com.amazonaws.services.ec2.model.DescribeInstanceAttributeResult;
 import com.amazonaws.services.ec2.model.DescribeInstancesRequest;
 import com.amazonaws.services.ec2.model.DescribeInstancesResult;
+import com.amazonaws.services.ec2.model.DescribeKeyPairsRequest;
+import com.amazonaws.services.ec2.model.DescribeKeyPairsResult;
+import com.amazonaws.services.ec2.model.DescribeSecurityGroupsRequest;
 import com.amazonaws.services.ec2.model.DescribeSecurityGroupsResult;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.InstanceAttribute;
+import com.amazonaws.services.ec2.model.InstanceStateChange;
 import com.amazonaws.services.ec2.model.IpPermission;
+import com.amazonaws.services.ec2.model.KeyPair;
+import com.amazonaws.services.ec2.model.KeyPairInfo;
 import com.amazonaws.services.ec2.model.Reservation;
+import com.amazonaws.services.ec2.model.RevokeSecurityGroupEgressRequest;
+import com.amazonaws.services.ec2.model.RevokeSecurityGroupIngressRequest;
 import com.amazonaws.services.ec2.model.RunInstancesRequest;
 import com.amazonaws.services.ec2.model.RunInstancesResult;
 import com.amazonaws.services.ec2.model.SecurityGroup;
@@ -44,6 +55,7 @@ import com.amazonaws.services.ec2.model.StopInstancesRequest;
 import com.amazonaws.services.ec2.model.StopInstancesResult;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
+import com.amazonaws.services.ec2.model.TerminateInstancesResult;
 import com.amazonaws.services.elasticloadbalancing.model.CreateLoadBalancerRequest;
 import com.amazonaws.services.elasticloadbalancing.model.CreateLoadBalancerResult;
 import com.amazonaws.services.opsworks.model.StartInstanceRequest;
@@ -176,10 +188,14 @@ public class EC2Client {
 	}
 	
 	public Instance findInstanceByControllerId(String controllerId) {
+		List<Filter> filters = new ArrayList<Filter>();
 		DescribeInstancesRequest request = new DescribeInstancesRequest();
 		Filter tagFilter = new Filter("tag:controllerId").withValues(controllerId);
+		Filter stateFilter = new Filter("instance-state-name").withValues("running");
+		filters.add(tagFilter);
+		filters.add(stateFilter);
 		DescribeInstancesResult result = ec2Client.describeInstances(
-				request.withFilters(tagFilter));
+				request.withFilters(filters));
 		List<Reservation> reservations = result.getReservations();
 		if (reservations.size() > 1 || reservations.size() < 1) {
 			return null;
@@ -206,10 +222,12 @@ public class EC2Client {
 		List<String> instanceIds = new ArrayList<String>();
 		instanceIds.add(instanceId);
 		TerminateInstancesRequest request = new TerminateInstancesRequest(instanceIds);
-		System.out.println("Terminating Instance " + instanceId);
-		ec2Client.terminateInstances(request);
+		TerminateInstancesResult result = ec2Client.terminateInstances(request);
 		System.out.println("Terminated Instance " + instanceId);
 		instances.remove(instanceId);
+		while (true) {
+			continue;
+		}
 	}
 	
 	public void startInstance(String instanceId) {
@@ -286,15 +304,58 @@ public class EC2Client {
 		       .withIpPermissions(ipPermission);
 		try {
 		    ec2Client.authorizeSecurityGroupIngress(request);
-		} catch (AmazonServiceException e) {
-			// Do nothing in case of exception except log it happened
-			System.out.println("An Error Occured: " + e.getErrorMessage());
+		} catch (AmazonServiceException error) {
+			// Do nothing in case of exception except log that it happened
+			System.out.println("An Error Occured: " + error.getErrorMessage());
+		}
+	}
+	
+	public void removeOutboundSecurityGroupIpPermission(String sgId, Collection<String> ipRanges, String protocol, Integer startPort, Integer endPort) {
+		RevokeSecurityGroupEgressRequest request = new RevokeSecurityGroupEgressRequest();
+		IpPermission ipPermission = new IpPermission();
+    	
+		ipPermission.withIpRanges(ipRanges)
+			        .withIpProtocol(protocol)
+			        .withFromPort(startPort)
+			        .withToPort(endPort);
+		request.withGroupId(sgId)
+		       .withIpPermissions(ipPermission);
+		try {
+		    ec2Client.revokeSecurityGroupEgress(request);
+		} catch (AmazonServiceException error) {
+			// Do nothing in case of exception except log that it happened
+			System.out.println("An Error Occured: " + error.getErrorMessage());
+		}
+	}
+	
+	public void removeInboundSecurityGroupIpPermission(String sgId, Collection<String> ipRanges, String protocol, Integer startPort, Integer endPort) {
+		RevokeSecurityGroupIngressRequest request = new RevokeSecurityGroupIngressRequest();
+		IpPermission ipPermission = new IpPermission();
+    	
+		ipPermission.withIpRanges(ipRanges)
+			        .withIpProtocol(protocol)
+			        .withFromPort(startPort)
+			        .withToPort(endPort);
+		request.withGroupId(sgId)
+		       .withIpPermissions(ipPermission);
+		try {
+		    ec2Client.revokeSecurityGroupIngress(request);
+		} catch (AmazonServiceException error) {
+			// Do nothing in case of exception except log that it happened
+			System.out.println("An Error Occured: " + error.getErrorMessage());
 		}
 	}
 	
 	private List<SecurityGroup> getSecurityGroups() {
-		DescribeSecurityGroupsResult results = ec2Client.describeSecurityGroups();
-		return results.getSecurityGroups();
+		DescribeSecurityGroupsResult result = ec2Client.describeSecurityGroups();		
+		return result.getSecurityGroups();
+	}
+	
+	public SecurityGroup getSecurityGroup(String securityGroupName) {
+		DescribeSecurityGroupsRequest request = new DescribeSecurityGroupsRequest();
+		request.withGroupNames(securityGroupName);
+		DescribeSecurityGroupsResult result = ec2Client.describeSecurityGroups(request);
+		return result.getSecurityGroups().get(0);
 	}
 	
 	public void deleteSecurityGroup(String securityGroupId) {
@@ -350,6 +411,35 @@ public class EC2Client {
 			instanceList.add(currentInstance);
 		}
 		return instanceList;
+	}
+	
+	public List<KeyPairInfo> getKeyPairs() {
+		DescribeKeyPairsRequest request = new DescribeKeyPairsRequest();
+		DescribeKeyPairsResult result = ec2Client.describeKeyPairs(request);
+		List<KeyPairInfo> keyPairs = result.getKeyPairs();
+		return keyPairs;
+	}
+	
+	public List<KeyPairInfo> getKeyPair(String keyName) throws AmazonServiceException {
+		DescribeKeyPairsRequest request = new DescribeKeyPairsRequest();
+		request.withKeyNames(keyName);
+		DescribeKeyPairsResult result = ec2Client.describeKeyPairs(request);
+		List<KeyPairInfo> keyPairs = result.getKeyPairs();
+		return keyPairs;
+	}
+	
+	public void createKeyPair(String keyName) {
+		CreateKeyPairRequest request = new CreateKeyPairRequest();
+		request.withKeyName(keyName);
+		CreateKeyPairResult result = ec2Client.createKeyPair(request);
+		KeyPair keyPair = result.getKeyPair();
+		System.out.println(keyPair.getKeyMaterial().toString());
+	}
+	
+	public void destroyKeyPair(String keyName) {
+		DeleteKeyPairRequest request = new DeleteKeyPairRequest();
+		request.withKeyName(keyName);
+		ec2Client.deleteKeyPair(request);
 	}
 	
 	public void updateResourceTag(String resourceId, String tagKey, String tagValue) {
